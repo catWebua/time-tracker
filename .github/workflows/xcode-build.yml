@@ -1,0 +1,41 @@
+name: Xcode Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-15   # macOS з Xcode 16
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project TimeTracker.xcodeproj \
+            -scheme TimeTracker \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -configuration Debug \
+            build \
+            | xcpretty || true
+
+      # Опціонально: запуск тестів
+      # - name: Test
+      #   run: |
+      #     xcodebuild test \
+      #       -project TimeTracker.xcodeproj \
+      #       -scheme TimeTracker \
+      #       -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+      #       | xcpretty || true
