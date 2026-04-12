@@ -13,6 +13,10 @@ final class Project {
     var isArchived: Bool
     var createdAt: Date
 
+    // Phase 1: budget & goal fields
+    var estimatedHours: Double   // 0 = no budget set
+    var dailyGoalHours: Double   // 0 = no daily goal
+
     @Relationship(deleteRule: .cascade)
     var entries: [TimeEntry] = []
 
@@ -21,7 +25,9 @@ final class Project {
         client: String = "",
         colorHex: String = "#A855F7",
         hourlyRate: Double = 0,
-        currency: String = "UAH"
+        currency: String = "UAH",
+        estimatedHours: Double = 0,
+        dailyGoalHours: Double = 0
     ) {
         self.id = UUID()
         self.name = name
@@ -31,6 +37,8 @@ final class Project {
         self.currency = currency
         self.isArchived = false
         self.createdAt = Date()
+        self.estimatedHours = estimatedHours
+        self.dailyGoalHours = dailyGoalHours
     }
 
     // MARK: - Computed
@@ -39,13 +47,26 @@ final class Project {
         entries.filter { $0.endedAt != nil }
     }
 
+    var unbilledEntries: [TimeEntry] {
+        completedEntries.filter { !$0.isBilled }
+    }
+
     var totalDuration: TimeInterval {
         completedEntries.reduce(0) { $0 + $1.duration }
+    }
+
+    var unbilledDuration: TimeInterval {
+        unbilledEntries.reduce(0) { $0 + $1.duration }
     }
 
     var totalEarned: Double {
         guard hourlyRate > 0 else { return 0 }
         return (totalDuration / 3600.0) * hourlyRate
+    }
+
+    var unbilledEarned: Double {
+        guard hourlyRate > 0 else { return 0 }
+        return (unbilledDuration / 3600.0) * hourlyRate
     }
 
     var accentColor: Color {
@@ -59,16 +80,10 @@ final class Project {
     var formattedEarned: String {
         String(format: "\(currencySymbol)%.0f", totalEarned)
     }
-}
 
-// MARK: - Hashable (required for value-based NavigationLink)
-
-extension Project: Hashable {
-    nonisolated static func == (lhs: Project, rhs: Project) -> Bool {
-        lhs.persistentModelID == rhs.persistentModelID
-    }
-
-    nonisolated func hash(into hasher: inout Hasher) {
-        hasher.combine(persistentModelID)
+    /// Budget progress 0.0–1.0. nil if no budget set.
+    var budgetProgress: Double? {
+        guard estimatedHours > 0 else { return nil }
+        return min(totalDuration / (estimatedHours * 3600), 1.0)
     }
 }
