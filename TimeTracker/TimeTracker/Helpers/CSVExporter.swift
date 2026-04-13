@@ -1,8 +1,36 @@
 import Foundation
+import SwiftUI
+import UniformTypeIdentifiers
 
+struct TimeReport: Transferable {
+    let csvData: Data
+    let filename: String
+    
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .commaSeparatedText) { report in
+            report.csvData
+        }
+        .suggestedFileName { report in
+            report.filename
+        }
+    }
+}
+
+@MainActor
 enum CSVExporter {
 
     // MARK: - Public API
+
+    /// Creates a TimeReport object safely from models
+    static func createReport(entries: [TimeEntry], periodName: String) -> TimeReport {
+        let csv = generate(entries: entries)
+        let data = csv.data(using: .utf8) ?? Data()
+        
+        let dateStr = Date.exportFormatter.string(from: Date())
+        let filename = "FreelanceKit (\(periodName)) \(dateStr).csv"
+        
+        return TimeReport(csvData: data, filename: filename)
+    }
 
     /// Generates a CSV string from an array of time entries.
     static func generate(entries: [TimeEntry]) -> String {
@@ -12,10 +40,13 @@ enum CSVExporter {
     }
 
     /// Writes CSV to a temp file and returns its URL for sharing.
-    static func makeShareURL(entries: [TimeEntry], projectName: String? = nil) -> URL {
-        let name = projectName.map { "\($0) " } ?? ""
+    static func makeShareURL(entries: [TimeEntry], projectName: String? = nil, periodName: String? = nil) -> URL {
+        let project = projectName.map { "\($0) " } ?? ""
+        let period = periodName.map { "(\($0)) " } ?? ""
         let dateStr = Date.exportFormatter.string(from: Date())
-        let filename = "\(name)TimeTracker \(dateStr).csv"
+        
+        // Premium filename: FreelanceKit [Project] (Period) Date.csv
+        let filename = "FreelanceKit \(project)\(period)\(dateStr).csv"
 
         let csv = generate(entries: entries)
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)

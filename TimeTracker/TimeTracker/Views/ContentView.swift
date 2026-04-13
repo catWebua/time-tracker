@@ -8,41 +8,40 @@ struct ContentView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            TimerView()
-                .tabItem {
-                    Label("Таймер", systemImage: selectedTab == 0 ? "timer.circle.fill" : "timer")
+        ZStack(alignment: .bottom) {
+            // 1. Global Background
+            AuraBackground()
+            
+            // 2. Main content switch
+            ZStack {
+                switch selectedTab {
+                case 0:
+                    TimerView()
+                case 1:
+                    ProjectListView()
+                case 2:
+                    EntryListView()
+                case 3:
+                    ReportsView()
+                default:
+                    TimerView()
                 }
-                .tag(0)
-
-            ProjectListView()
-                .tabItem {
-                    Label("Проекти", systemImage: selectedTab == 1 ? "folder.fill" : "folder")
-                }
-                .tag(1)
-
-            EntryListView()
-                .tabItem {
-                    Label("Записи", systemImage: selectedTab == 2 ? "list.bullet.circle.fill" : "list.bullet")
-                }
-                .tag(2)
-
-            ReportsView()
-                .tabItem {
-                    Label("Звіти", systemImage: selectedTab == 3 ? "chart.bar.fill" : "chart.bar")
-                }
-                .tag(3)
-
-            SettingsView()
-                .tabItem {
-                    Label("Налаштування", systemImage: selectedTab == 4 ? "gearshape.fill" : "gearshape")
-                }
-                .tag(4)
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            .id(selectedTab)
+            .safeAreaInset(edge: .bottom) {
+                GlassTabBar(selectedTab: $selectedTab)
+            }
         }
-        .tint(.purple)
         .preferredColorScheme(.dark)
         .onAppear {
             timerVM.restoreActiveEntry(from: context)
         }
     }
+}
+
+#Preview {
+    ContentView()
+        .modelContainer(for: [Project.self, TimeEntry.self], inMemory: true)
+        .environment(TimerViewModel())
 }

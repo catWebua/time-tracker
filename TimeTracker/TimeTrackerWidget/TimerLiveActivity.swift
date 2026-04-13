@@ -8,20 +8,6 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 
-// MARK: - Activity Attributes (shared з основним таргетом)
-// Цю структуру треба також скопіювати у основний app target!
-
-public struct TimerActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var startedAt: Date
-        var projectName: String
-        var projectColorHex: String
-        var isRunning: Bool
-    }
-
-    public var taskDescription: String
-}
-
 // MARK: - Live Activity Widget
 
 struct TimerLiveActivity: Widget {

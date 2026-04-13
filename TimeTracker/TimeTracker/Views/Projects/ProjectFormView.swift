@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 struct ProjectFormView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -15,6 +16,10 @@ struct ProjectFormView: View {
     @State private var selectedColor: String = "#A855F7"
     @State private var estimatedHours: String = ""
     @State private var dailyGoalHours: String = ""
+    
+    // UI State
+    @State private var errorMessage: String? 
+    @State private var showError = false
 
     private let presetColors = [
         "#A855F7", "#7C3AED", "#3B82F6", "#0EA5E9",
@@ -27,105 +32,107 @@ struct ProjectFormView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Назва та клієнт
-                Section {
-                    TextField("Назва проекту", text: $name)
-                    TextField("Клієнт (необов'язково)", text: $client)
-                } header: {
-                    Text("Основне")
-                }
+            ZStack {
+                // Background
+                AuraBackground()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 32) {
+                        // Title
+                        Text(isEditing ? "Редагувати" : "Новий проект")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
 
-                // Колір
-                Section {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
-                        ForEach(presetColors, id: \.self) { hex in
-                            Button {
-                                selectedColor = hex
-                            } label: {
-                                Circle()
-                                    .fill(Color(hex: hex))
-                                    .frame(width: 36, height: 36)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(.white, lineWidth: selectedColor == hex ? 2.5 : 0)
-                                            .padding(3)
-                                    )
-                                    .scaleEffect(selectedColor == hex ? 1.15 : 1.0)
-                                    .animation(.spring(response: 0.25), value: selectedColor)
+                        VStack(spacing: 24) {
+                            // Section: Main
+                            GlassInputGroup(title: "ОСНОВНЕ") {
+                                VStack(spacing: 16) {
+                                    GlassTextField("Назва проекту*", text: $name)
+                                    GlassTextField("Клієнт (необов'язково)", text: $client)
+                                }
                             }
-                            .sensoryFeedback(.selection, trigger: selectedColor)
-                            .buttonStyle(.plain)
+                            
+                            // Section: Color
+                            GlassInputGroup(title: "КОЛІР ПРОЕКТУ") {
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 12) {
+                                    ForEach(presetColors, id: \.self) { hex in
+                                        Button {
+                                            selectedColor = hex
+                                        } label: {
+                                            Circle()
+                                                .fill(Color(hex: hex))
+                                                .frame(width: 32, height: 32)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(.white, lineWidth: selectedColor == hex ? 2 : 0)
+                                                        .padding(2)
+                                                )
+                                                .scaleEffect(selectedColor == hex ? 1.2 : 1.0)
+                                                .shadow(color: Color(hex: hex).opacity(selectedColor == hex ? 0.4 : 0), radius: 6)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+
+                            // Section: Billing
+                            GlassInputGroup(title: "ПОГОДИННА СТАВКА") {
+                                HStack(spacing: 12) {
+                                    GlassTextField("0", text: $hourlyRate)
+                                        .keyboardType(.decimalPad)
+                                    
+                                    Picker("", selection: $currency) {
+                                        Text("UAH").tag("UAH")
+                                        Text("USD").tag("USD")
+                                    }
+                                    .pickerStyle(.menu)
+                                    .glassCard(cornerRadius: 12, opacity: 0.1)
+                                }
+                            }
+                            
+                            // Section: Planning
+                            GlassInputGroup(title: "ПЛАНУВАННЯ") {
+                                VStack(spacing: 16) {
+                                    GlassInputRow(title: "Бюджет годин", text: $estimatedHours, unit: "год")
+                                    GlassInputRow(title: "Денна ціль", text: $dailyGoalHours, unit: "год")
+                                }
+                            }
                         }
-                    }
-                    .padding(.vertical, 6)
-                } header: {
-                    Text("Колір")
-                }
-
-                // Ставка
-                Section {
-                    HStack {
-                        TextField("0", text: $hourlyRate)
-                            .keyboardType(.decimalPad)
-
-                        Picker("", selection: $currency) {
-                            Text("₴ UAH").tag("UAH")
-                            Text("$ USD").tag("USD")
+                        .padding(.horizontal)
+                        
+                        // Action Buttons
+                        VStack(spacing: 12) {
+                            Button {
+                                save()
+                            } label: {
+                                Text(isEditing ? "Зберегти зміни" : "Створити проект")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.glass(color: isValid ? Color(hex: selectedColor) : .gray))
+                            .disabled(!isValid)
+                            
+                            Button {
+                                dismiss()
+                            } label: {
+                                Text("Скасувати")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.4))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                            }
                         }
-                        .pickerStyle(.menu)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        
+                        Spacer(minLength: 50)
                     }
-                } header: {
-                    Text("Погодинна ставка")
-                } footer: {
-                    Text("Залиш 0 якщо не рахуєш гроші")
-                }
-
-                // Бюджет та цілі
-                Section {
-                    HStack {
-                        Text("Бюджет годин")
-                        Spacer()
-                        TextField("0", text: $estimatedHours)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("год.")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack {
-                        Text("Денна ціль")
-                        Spacer()
-                        TextField("0", text: $dailyGoalHours)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("год.")
-                            .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text("Планування")
-                } footer: {
-                    Text("Залиш 0 щоб вимкнути. Бюджет — загальний ліміт годин, денна ціль — скільки хочеш відробити за день.")
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(Color(.systemBackground))
-            .navigationTitle(isEditing ? "Редагувати" : "Новий проект")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Скасувати") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Зберегти" : "Додати") {
-                        save()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(!isValid)
-                }
-            }
+            .toolbar(.hidden)
             .onAppear {
                 if let p = project {
                     name = p.name
@@ -137,17 +144,25 @@ struct ProjectFormView: View {
                     dailyGoalHours = p.dailyGoalHours > 0 ? String(format: "%.0f", p.dailyGoalHours) : ""
                 }
             }
+            .alert("Помилка", isPresented: $showError) {
+                Button("OK") {}
+            } message: {
+                Text(errorMessage ?? "Невідома помилка")
+            }
         }
     }
 
     private func save() {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+
         let rate  = Double(hourlyRate.replacingOccurrences(of: ",", with: ".")) ?? 0
         let budget = Double(estimatedHours.replacingOccurrences(of: ",", with: ".")) ?? 0
         let daily  = Double(dailyGoalHours.replacingOccurrences(of: ",", with: ".")) ?? 0
 
         if let p = project {
-            p.name           = name.trimmingCharacters(in: .whitespaces)
-            p.client         = client.trimmingCharacters(in: .whitespaces)
+            p.name           = trimmedName
+            p.client         = client.trimmingCharacters(in: .whitespacesAndNewlines)
             p.hourlyRate     = rate
             p.currency       = currency
             p.colorHex       = selectedColor
@@ -155,8 +170,8 @@ struct ProjectFormView: View {
             p.dailyGoalHours = daily
         } else {
             let newProject = Project(
-                name: name.trimmingCharacters(in: .whitespaces),
-                client: client.trimmingCharacters(in: .whitespaces),
+                name: trimmedName,
+                client: client.trimmingCharacters(in: .whitespacesAndNewlines),
                 colorHex: selectedColor,
                 hourlyRate: rate,
                 currency: currency,
@@ -166,7 +181,80 @@ struct ProjectFormView: View {
             context.insert(newProject)
         }
 
-        try? context.save()
-        dismiss()
+        do {
+            try context.save()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+        }
+    }
+}
+
+// MARK: - Glass Form Components
+
+struct GlassInputGroup<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .tracking(1.5)
+                .foregroundStyle(.white.opacity(0.3))
+                .padding(.leading, 8)
+            
+            content
+                .padding(20)
+                .glassCard(cornerRadius: 24, opacity: 0.08)
+        }
+    }
+}
+
+struct GlassTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    
+    init(_ placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        self._text = text
+    }
+    
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .padding(14)
+            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(.white)
+            .tint(.purple)
+    }
+}
+
+struct GlassInputRow: View {
+    let title: String
+    @Binding var text: String
+    let unit: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.6))
+            Spacer()
+            TextField("0", text: $text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 60)
+                .padding(8)
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+            Text(unit)
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.3))
+        }
     }
 }

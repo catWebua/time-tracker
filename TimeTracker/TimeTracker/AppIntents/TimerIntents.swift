@@ -15,20 +15,29 @@ struct StartTimerIntent: AppIntent {
         let context = container.mainContext
 
         // Find last used project (most recent active entry's project)
-        let descriptor = FetchDescriptor<TimeEntry>(
-            sort: [SortDescriptor(\.startedAt, order: .reverse)]
-        )
+        let sortBy = [SortDescriptor<TimeEntry>(\.startedAt, order: .reverse)]
+        let descriptor = FetchDescriptor<TimeEntry>(sortBy: sortBy)
+        
         let lastEntry = try context.fetch(descriptor).first
-        guard let project = lastEntry?.project ?? (try context.fetch(FetchDescriptor<Project>()).first) else {
+        
+        let project: Project?
+        if let entryProject = lastEntry?.project {
+            project = entryProject
+        } else {
+            let projectDescriptor = FetchDescriptor<Project>()
+            project = try context.fetch(projectDescriptor).first
+        }
+        
+        guard let finalProject = project else {
             return .result(dialog: "Спочатку створи проект у FreelanceKit")
         }
 
         // Create new entry
-        let entry = TimeEntry(project: project, startedAt: Date())
+        let entry = TimeEntry(project: finalProject, startedAt: Date())
         context.insert(entry)
         try context.save()
 
-        return .result(dialog: "Таймер запущено для «\(project.name)»")
+        return .result(dialog: "Таймер запущено для «\(finalProject.name)»")
     }
 }
 
@@ -46,9 +55,11 @@ struct StopTimerIntent: AppIntent {
         let context = container.mainContext
 
         let descriptor = FetchDescriptor<TimeEntry>(
-            predicate: #Predicate { $0.endedAt == nil }
+            predicate: #Predicate<TimeEntry> { $0.endedAt == nil }
         )
-        guard let activeEntry = try context.fetch(descriptor).first else {
+        
+        let activeEntries = try context.fetch(descriptor)
+        guard let activeEntry = activeEntries.first else {
             return .result(dialog: "Активного таймера немає")
         }
 

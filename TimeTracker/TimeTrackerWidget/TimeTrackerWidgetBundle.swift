@@ -43,32 +43,33 @@ struct TimerWidgetProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TimerEntry) -> Void) {
-        completion(currentEntry())
+        Task { @MainActor in
+            completion(currentEntry())
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TimerEntry>) -> Void) {
-        var entries: [TimerEntry] = []
-        let current = currentEntry()
-        entries.append(current)
+        Task { @MainActor in
+            var entries: [TimerEntry] = []
+            let current = currentEntry()
+            entries.append(current)
 
-        if current.isRunning {
-            // Refresh every minute while running
-            let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
-            completion(Timeline(entries: entries, policy: .after(nextUpdate)))
-        } else {
-            completion(Timeline(entries: entries, policy: .never))
+            if current.isRunning {
+                // Refresh every minute while running
+                let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
+                completion(Timeline(entries: entries, policy: .after(nextUpdate)))
+            } else {
+                completion(Timeline(entries: entries, policy: .never))
+            }
         }
     }
 
     @MainActor
     private func currentEntry() -> TimerEntry {
-        guard let container = try? ModelContainer(for: Project.self, TimeEntry.self) else {
-            return TimerEntry(date: Date(), projectName: nil, projectColorHex: nil,
-                              isRunning: false, startedAt: nil, displayTime: "00:00:00")
-        }
+        let container = DataController.sharedContainer
         let context = container.mainContext
         let descriptor = FetchDescriptor<TimeEntry>(
-            predicate: #Predicate { $0.endedAt == nil }
+            predicate: #Predicate<TimeEntry> { $0.endedAt == nil }
         )
         let activeEntry = try? context.fetch(descriptor).first
         let elapsed = activeEntry.map { Date().timeIntervalSince($0.startedAt) } ?? 0

@@ -14,7 +14,19 @@ struct ProjectPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                // Premium background matching the main view aesthetic
+                MeshGradient(width: 3, height: 3, points: [
+                    [0, 0], [0.5, 0], [1, 0],
+                    [0, 0.5], [0.5, 0.5], [1, 0.5],
+                    [0, 1], [0.5, 1], [1, 1]
+                ], colors: [
+                    .black, .black, .black,
+                    .purple.opacity(0.12), .black, .blue.opacity(0.08),
+                    .black, .black, .black
+                ])
+                .ignoresSafeArea()
+
                 if projects.isEmpty {
                     emptyState
                 } else {
@@ -24,18 +36,19 @@ struct ProjectPickerSheet: View {
             .navigationTitle("Оберіть проект")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Скасувати") { dismiss() }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Готово") { dismiss() }
+                        .fontWeight(.bold)
                 }
             }
         }
         .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .presentationBackground(.clear) // Expert: Use clear background to let the custom mesh gradient shine
     }
 
     private var projectList: some View {
         ScrollView {
-            LazyVStack(spacing: 10) {
+            LazyVStack(spacing: 12) {
                 ForEach(projects) { project in
                     ProjectPickerRow(
                         project: project,
@@ -44,8 +57,7 @@ struct ProjectPickerSheet: View {
                         selectedProject = project
                         dismiss()
                     }
-                    // Skill: declarative sensoryFeedback instead of UIKit generators
-                    .sensoryFeedback(.selection, trigger: selectedProject?.id)
+                    .primaryHaptic(trigger: selectedProject?.id)
                 }
             }
             .padding()
@@ -53,22 +65,20 @@ struct ProjectPickerSheet: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 20) {
             Image(systemName: "folder.badge.plus")
-                .font(.system(size: 48))
-                .foregroundStyle(.purple)
+                .font(.system(size: 60))
+                .foregroundStyle(.purple.gradient)
             Text("Немає проектів")
                 .font(.headline)
-            Text("Спочатку створіть проект у вкладці «Проекти»")
+            Text("Створіть свій перший проект у вкладці «Проекти»")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
         }
         .padding()
     }
 }
-
-// MARK: - Row (extracted to fix "unable to type-check expression" compiler error)
 
 private struct ProjectPickerRow: View {
     let project: Project
@@ -81,16 +91,17 @@ private struct ProjectPickerRow: View {
                 Circle()
                     .fill(project.accentColor)
                     .frame(width: 12, height: 12)
+                    .shadow(color: project.accentColor.opacity(0.5), radius: 6)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(project.name)
                         .font(.body)
-                        .fontWeight(.medium)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.white)
                     if !project.client.isEmpty {
                         Text(project.client)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
 
@@ -98,19 +109,15 @@ private struct ProjectPickerRow: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.purple)
+                        .font(.title3)
+                        .foregroundStyle(project.accentColor.gradient)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(rowBorder)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            // Use our new design system tokens
+            .glassCard(cornerRadius: 18, opacity: isSelected ? 0.3 : 0.15, shadow: isSelected)
         }
         .buttonStyle(.plain)
-    }
-
-    private var rowBorder: some View {
-        let color: Color = isSelected ? Color.purple.opacity(0.5) : Color.white.opacity(0.07)
-        return RoundedRectangle(cornerRadius: 14).stroke(color, lineWidth: 1)
     }
 }

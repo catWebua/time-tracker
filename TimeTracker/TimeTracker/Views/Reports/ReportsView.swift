@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Charts
 
 struct ReportsView: View {
     @Environment(\.modelContext) private var context
@@ -18,16 +19,12 @@ struct ReportsView: View {
     private var projects: [Project]
 
     @State private var period: Period = .week
-    @State private var showingShareSheet = false
-    @State private var csvURL: URL?
 
     enum Period: String, CaseIterable {
         case week  = "Тиждень"
         case month = "Місяць"
-        case all   = "Весь час"
+        case all   = "Весь"
     }
-
-    // MARK: - Filtered Data
 
     private var filteredEntries: [TimeEntry] {
         let now = Date()
@@ -42,10 +39,6 @@ struct ReportsView: View {
 
     private var totalDuration: TimeInterval {
         filteredEntries.reduce(0) { $0 + $1.duration }
-    }
-
-    private var unbilledDuration: TimeInterval {
-        filteredEntries.filter { !$0.isBilled }.reduce(0) { $0 + $1.duration }
     }
 
     private var totalEarned: Double {
@@ -77,210 +70,126 @@ struct ReportsView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if allEntries.isEmpty {
-                    ContentUnavailableView {
-                        Label("Немає даних", systemImage: "chart.bar.xaxis")
-                    } description: {
-                        Text("Запусти таймер щоб побачити звіти")
+            ZStack {
+                // Background is global
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Custom Header
+                        HStack {
+                            Text("Звіти")
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            Spacer()
+                            
+                            ShareLink(
+                                item: CSVExporter.createReport(entries: filteredEntries, periodName: period.rawValue),
+                                preview: SharePreview("Звіт (\(period.rawValue))", image: Image(systemName: "chart.bar.doc.horizontal"))
+                            ) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.title3)
+                                    .foregroundStyle(.purple)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+
+                        // Custom Segmented Picker
+                        Picker("Період", selection: $period) {
+                            ForEach(Period.allCases, id: \.self) { p in
+                                Text(p.rawValue).tag(p)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+
+                        if allEntries.isEmpty {
+                            emptyState
+                        } else {
+                            dashboardContent
+                        }
                     }
-                } else {
-                    reportContent
+                    .padding(.bottom, 120) // Bottom tab bar margin
                 }
             }
-            .navigationTitle("Звіти")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        exportCSV()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                }
-            }
-            .sheet(isPresented: $showingShareSheet) {
-                if let url = csvURL {
-                    ShareSheet(url: url)
-                }
-            }
+            .toolbar(.hidden)
         }
     }
 
-    // MARK: - Report Content
-
-    private var reportContent: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Picker("Період", selection: $period) {
-                    ForEach(Period.allCases, id: \.self) { p in
-                        Text(p.rawValue).tag(p)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-
-                summarySection
-
-                // Unbilled banner
-                if unbilledDuration > 0 {
-                    unbilledBanner
-                }
-
-                if !dailyData.isEmpty {
-                    barChartSection
-                }
-
-                if !projectData.isEmpty {
-                    projectBreakdownSection
-                }
-
-                if filteredEntries.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "calendar.badge.minus")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.secondary)
-                        Text("Немає даних за цей період")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 40)
-                }
-            }
-            .padding(.bottom, 20)
+    private var emptyState: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 100)
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 64))
+                .foregroundStyle(.white.opacity(0.1))
+            Text("Немає даних")
+                .font(.title3.bold())
+                .foregroundStyle(.white.opacity(0.4))
         }
+        .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Unbilled Banner
-
-    private var unbilledBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "clock.badge.exclamationmark")
-                .font(.title3)
-                .foregroundStyle(.orange)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Не оплачені години")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text("\(DurationFormatter.short(unbilledDuration)) ще не позначено оплаченими")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(14)
-        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.orange.opacity(0.3), lineWidth: 1))
-        .padding(.horizontal)
-    }
-
-    // MARK: - Summary Cards
-
-    private var summarySection: some View {
-        HStack(spacing: 12) {
-            summaryCard(
-                title: "Год. відпрацьовано",
-                value: String(format: "%.1f", totalDuration / 3600),
-                unit: "год",
-                icon: "clock.fill",
-                color: .purple
-            )
-
-            if totalEarned > 0 {
-                summaryCard(
-                    title: "Зароблено",
+    private var dashboardContent: some View {
+        VStack(spacing: 24) {
+            // Main Stats
+            HStack(spacing: 16) {
+                GlassDashboardTile(
+                    title: "ГОДИНИ",
+                    value: String(format: "%.1f", totalDuration / 3600),
+                    unit: "год",
+                    icon: "clock.fill",
+                    color: .purple
+                )
+                
+                GlassDashboardTile(
+                    title: "ДОХІД",
                     value: String(format: "%.0f", totalEarned),
                     unit: projects.first?.currencySymbol ?? "₴",
                     icon: "banknote.fill",
                     color: .green
                 )
-            } else {
-                summaryCard(
-                    title: "Сесій",
-                    value: "\(filteredEntries.count)",
-                    unit: "сес.",
-                    icon: "timer",
-                    color: .blue
-                )
             }
-        }
-        .padding(.horizontal)
-    }
+            .padding(.horizontal)
 
-    private func summaryCard(title: String, value: String, unit: String, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Chart Section
+            VStack(alignment: .leading, spacing: 16) {
+                Text("ДИНАМІКА РОБОТИ")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .tracking(1.5)
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.horizontal)
+
+                BarChartView(data: dailyData)
+                    .frame(height: 180)
+                    .padding(20)
+                    .glassCard(cornerRadius: 24, opacity: 0.1)
+                    .padding(.horizontal)
             }
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                Text(unit)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.2), lineWidth: 1))
-    }
 
-    // MARK: - Bar Chart
+            // Project Breakdown
+            VStack(alignment: .leading, spacing: 16) {
+                Text("РОЗПОДІЛ ПО ПРОЕКТАХ")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .tracking(1.5)
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.horizontal)
 
-    private var barChartSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("По днях")
-                .font(.headline)
+                VStack(spacing: 12) {
+                    ForEach(projectData) { item in
+                        ProjectBreakdownRow(item: item, totalDuration: totalDuration)
+                    }
+                }
+                .padding(20)
+                .glassCard(cornerRadius: 24, opacity: 0.08)
                 .padding(.horizontal)
-
-            BarChartView(data: dailyData)
-                .frame(height: 180)
-                .padding(.horizontal)
-        }
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.08), lineWidth: 1))
-        .padding(.horizontal)
-    }
-
-    // MARK: - Project Breakdown
-
-    private var projectBreakdownSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("По проектах")
-                .font(.headline)
-                .padding(.horizontal, 16)
-
-            ForEach(projectData.prefix(6)) { item in
-                ProjectBreakdownRow(item: item, totalDuration: totalDuration)
             }
         }
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.08), lineWidth: 1))
-        .padding(.horizontal)
-    }
-
-    // MARK: - CSV Export
-
-    private func exportCSV() {
-        csvURL = CSVExporter.makeShareURL(entries: filteredEntries)
-        showingShareSheet = true
     }
 }
 
-// MARK: - Bar Chart View (extracted for compiler performance)
-
-import Charts
-
-private struct BarChartView: View {
+// MARK: - Enhanced Bar Chart
+struct BarChartView: View {
     let data: [DayData]
 
     var body: some View {
@@ -291,17 +200,18 @@ private struct BarChartView: View {
             )
             .foregroundStyle(
                 LinearGradient(
-                    colors: [.purple, Color(hex: "#7C3AED")],
-                    startPoint: .bottom,
-                    endPoint: .top
+                    colors: [.purple, .blue.opacity(0.5)],
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
             )
             .cornerRadius(6)
         }
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) { _ in
-                AxisValueLabel(format: .dateTime.weekday(.abbreviated), centered: true)
-                    .foregroundStyle(Color.secondary)
+                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                    .foregroundStyle(Color.white.opacity(0.3))
+                    .font(.system(size: 10, weight: .bold))
             }
         }
         .chartYAxis {
@@ -309,7 +219,7 @@ private struct BarChartView: View {
                 AxisValueLabel {
                     if let h = value.as(Double.self) {
                         Text("\(Int(h))г")
-                            .foregroundStyle(Color.secondary)
+                            .foregroundStyle(Color.white.opacity(0.2))
                     }
                 }
             }
@@ -318,8 +228,7 @@ private struct BarChartView: View {
 }
 
 // MARK: - Project Breakdown Row
-
-private struct ProjectBreakdownRow: View {
+struct ProjectBreakdownRow: View {
     let item: ProjectData
     let totalDuration: TimeInterval
 
@@ -328,61 +237,47 @@ private struct ProjectBreakdownRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(item.project.accentColor)
-                .frame(width: 10, height: 10)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(item.project.name)
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Text(DurationFormatter.short(item.duration))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.08))
-                            .frame(height: 6)
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(item.project.accentColor)
-                            .frame(width: geo.size.width * fraction, height: 6)
-                    }
-                }
-                .frame(height: 6)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Circle()
+                    .fill(item.project.accentColor)
+                    .frame(width: 8, height: 8)
+                
+                Text(item.project.name)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+                
+                Spacer()
+                
+                Text(DurationFormatter.short(item.duration))
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white)
             }
+            
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.05))
+                        .frame(height: 6)
+                    Capsule()
+                        .fill(item.project.accentColor)
+                        .frame(width: geo.size.width * fraction, height: 6)
+                        .shadow(color: item.project.accentColor.opacity(0.3), radius: 4)
+                }
+            }
+            .frame(height: 6)
         }
-        .padding(.horizontal, 16)
     }
 }
 
-// MARK: - Share Sheet (UIKit bridge for file sharing)
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let url: URL
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [url], applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-// MARK: - Data Models
-
-private struct DayData: Identifiable {
+// MARK: - Data Models Extensions
+struct DayData: Identifiable {
     var id: Date { date }
     let date: Date
     let hours: Double
 }
 
-private struct ProjectData: Identifiable {
+struct ProjectData: Identifiable {
     var id: UUID { project.id }
     let project: Project
     let duration: TimeInterval

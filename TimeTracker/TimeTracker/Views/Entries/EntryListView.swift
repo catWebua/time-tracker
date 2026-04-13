@@ -28,7 +28,6 @@ struct EntryListView: View {
         }
     }
 
-    // Pre-computed grouped data to avoid inline filtering inside ForEach
     private var grouped: [(key: Date, entries: [TimeEntry])] {
         let dict = Dictionary(grouping: filtered) { $0.startedAt.startOfDay }
         return dict.sorted { $0.key > $1.key }
@@ -37,119 +36,137 @@ struct EntryListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if entries.isEmpty {
-                    // Skill: ContentUnavailableView for empty states (iOS 17+)
-                    ContentUnavailableView {
-                        Label("Немає записів", systemImage: "clock.badge.xmark")
-                    } description: {
-                        Text("Запусти таймер або додай запис вручну")
-                    } actions: {
-                        Button("Додати запис") { showManualEntry = true }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.purple)
+            ZStack {
+                // Background is handled by ContentView
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Custom Large Header
+                        HStack {
+                            Text("Записи")
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            Spacer()
+                            
+                            Button {
+                                showManualEntry = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title)
+                                    .foregroundStyle(.purple)
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                        .padding(.bottom, 12)
+
+                        // Billing Filter Segmented Control
+                        Picker("Фільтр", selection: $billingFilter) {
+                            ForEach(BillingFilter.allCases, id: \.self) { f in
+                                Text(f.rawValue).tag(f)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+                        .padding(.bottom, 24)
+
+                        if entries.isEmpty {
+                            emptyState
+                        } else if grouped.isEmpty {
+                            noResultsState
+                        } else {
+                            timelineContent
+                        }
                     }
-                } else {
-                    entryList
                 }
             }
-            .navigationTitle("Записи")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showManualEntry = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                    }
-                }
-            }
+            .toolbar(.hidden)
         }
         .sheet(isPresented: $showManualEntry) {
             EntryFormView()
         }
     }
 
-    // MARK: - Entry List
+    private var emptyState: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 100)
+            Image(systemName: "clock.badge.xmark")
+                .font(.system(size: 64))
+                .foregroundStyle(.white.opacity(0.1))
+            Text("Немає записів")
+                .font(.title3.bold())
+                .foregroundStyle(.white.opacity(0.4))
+            Button("Додати запис") { showManualEntry = true }
+                .buttonStyle(.glass(color: .purple))
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private var noResultsState: some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 100)
+            Text("Нічого не знайдено")
+                .font(.headline)
+                .foregroundStyle(.white.opacity(0.3))
+        }
+        .frame(maxWidth: .infinity)
+    }
 
-    private var entryList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
-                // Billing filter
-                Picker("Фільтр", selection: $billingFilter) {
-                    ForEach(BillingFilter.allCases, id: \.self) { f in
-                        Text(f.rawValue).tag(f)
+    private var timelineContent: some View {
+        VStack(spacing: 32) {
+            ForEach(grouped, id: \.key) { group in
+                VStack(alignment: .leading, spacing: 16) {
+                    // Day Header
+                    HStack {
+                        Text(group.key.relativeLabel().uppercased())
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .tracking(1.5)
+                            .foregroundStyle(.white.opacity(0.4))
+                        
+                        Spacer()
+                        
+                        let total = group.entries.reduce(0.0) { $0 + $1.duration }
+                        Text(DurationFormatter.short(total))
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.purple)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .glassCard(cornerRadius: 8, opacity: 0.1)
                     }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-
-                if grouped.isEmpty {
-                    ContentUnavailableView {
-                        Label("Немає записів", systemImage: billingFilter == .billed ? "checkmark.circle" : "clock")
-                    } description: {
-                        Text(billingFilter == .billed ? "Ще нічого не позначено оплаченим" : "Всі записи вже оплачені")
-                    }
-                    .padding(.top, 40)
-                } else {
-                    ForEach(grouped, id: \.key) { group in
-                        Section {
-                            // Skill: ForEach with stable Identifiable identity
-                            ForEach(group.entries) { entry in
-                                EntryRow(entry: entry)
-                                    .padding(.horizontal)
-                                    .padding(.bottom, 8)
-                                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                        Button {
-                                            withAnimation { toggleBilled(entry) }
-                                        } label: {
-                                            Label(
-                                                entry.isBilled ? "Не оплачено" : "Оплачено",
-                                                systemImage: entry.isBilled ? "xmark.circle" : "checkmark.circle"
-                                            )
-                                        }
-                                        .tint(entry.isBilled ? .orange : .green)
+                    .padding(.horizontal)
+                    
+                    // Entries for this day
+                    VStack(spacing: 12) {
+                        ForEach(group.entries) { entry in
+                            TimeEntryRow(entry: entry)
+                                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                    Button {
+                                        withAnimation { toggleBilled(entry) }
+                                    } label: {
+                                        Label(
+                                            entry.isBilled ? "Не оплачено" : "Оплачено",
+                                            systemImage: entry.isBilled ? "xmark.circle" : "checkmark.circle"
+                                        )
                                     }
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button(role: .destructive) {
-                                            deleteEntry(entry)
-                                        } label: {
-                                            Label("Видалити", systemImage: "trash")
-                                        }
+                                    .tint(entry.isBilled ? .orange : .green)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        deleteEntry(entry)
+                                    } label: {
+                                        Label("Видалити", systemImage: "trash")
                                     }
-                            }
-                        } header: {
-                            dayHeader(for: group.key, entries: group.entries)
+                                }
                         }
                     }
                 }
             }
-            .padding(.bottom)
-        }
-    }
-
-    private func dayHeader(for date: Date, entries: [TimeEntry]) -> some View {
-        HStack {
-            Text(date.relativeLabel())
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            let total = entries.reduce(0.0) { $0 + $1.duration }
-            Text(DurationFormatter.short(total))
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.purple)
         }
         .padding(.horizontal)
-        .padding(.vertical, 6)
-        .background(Color(.systemBackground))
+        .padding(.bottom, 100)
     }
-
-    // MARK: - Actions
 
     private func toggleBilled(_ entry: TimeEntry) {
         entry.isBilled.toggle()
@@ -159,72 +176,5 @@ struct EntryListView: View {
     private func deleteEntry(_ entry: TimeEntry) {
         context.delete(entry)
         try? context.save()
-    }
-}
-
-// MARK: - Entry Row
-
-struct EntryRow: View {
-    let entry: TimeEntry
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if let project = entry.project {
-                Circle()
-                    .fill(project.accentColor)
-                    .frame(width: 8, height: 8)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                if !entry.taskDescription.isEmpty {
-                    Text(entry.taskDescription)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                }
-                HStack(spacing: 6) {
-                    if let project = entry.project {
-                        Text(project.name)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let endedAt = entry.endedAt {
-                        Text("·")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        Text("\(entry.startedAt.timeString()) – \(endedAt.timeString())")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 8) {
-                // Billing badge
-                if entry.isBilled {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
-
-                Text(entry.formattedDuration)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-            }
-        }
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(
-                    entry.isBilled ? Color.green.opacity(0.25) : Color.white.opacity(0.07),
-                    lineWidth: 1
-                )
-        )
     }
 }

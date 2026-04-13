@@ -6,14 +6,70 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7A8DCAA62F8C275F007411C8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A8DCAA52F8C275F007411C8 /* WidgetKit.framework */; };
+		7A8DCAA82F8C275F007411C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A8DCAA72F8C275F007411C8 /* SwiftUI.framework */; };
+		7A8DCAB72F8C2760007411C8 /* TimeTrackerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A8DCAA32F8C275F007411C8 /* TimeTrackerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7A8DCAB52F8C2760007411C8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A8DC94D2F8AF485007411C8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A8DCAA22F8C275F007411C8;
+			remoteInfo = TimeTrackerWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A8DCABC2F8C2760007411C8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7A8DCAB72F8C2760007411C8 /* TimeTrackerWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		7A8DC9552F8AF485007411C8 /* TimeTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A8DCAA32F8C275F007411C8 /* TimeTrackerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTrackerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A8DCAA52F8C275F007411C8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		7A8DCAA72F8C275F007411C8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7A8DCAB82F8C2760007411C8 /* Exceptions for "TimeTrackerWidget" folder in "TimeTrackerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7A8DCAA22F8C275F007411C8 /* TimeTrackerWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7A8DC9572F8AF485007411C8 /* TimeTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TimeTracker;
+			sourceTree = "<group>";
+		};
+		7A8DCAA92F8C275F007411C8 /* TimeTrackerWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7A8DCAB82F8C2760007411C8 /* Exceptions for "TimeTrackerWidget" folder in "TimeTrackerWidgetExtension" target */,
+			);
+			path = TimeTrackerWidget;
+			sourceTree = "<group>";
+		};
+		7A8DCB012F8D000100000000 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,6 +82,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A8DCAA02F8C275F007411C8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A8DCAA82F8C275F007411C8 /* SwiftUI.framework in Frameworks */,
+				7A8DCAA62F8C275F007411C8 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -33,6 +98,9 @@
 			isa = PBXGroup;
 			children = (
 				7A8DC9572F8AF485007411C8 /* TimeTracker */,
+				7A8DCAA92F8C275F007411C8 /* TimeTrackerWidget */,
+				7A8DCB012F8D000100000000 /* Shared */,
+				7A8DCAA42F8C275F007411C8 /* Frameworks */,
 				7A8DC9562F8AF485007411C8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +109,18 @@
 			isa = PBXGroup;
 			children = (
 				7A8DC9552F8AF485007411C8 /* TimeTracker.app */,
+				7A8DCAA32F8C275F007411C8 /* TimeTrackerWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7A8DCAA42F8C275F007411C8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7A8DCAA52F8C275F007411C8 /* WidgetKit.framework */,
+				7A8DCAA72F8C275F007411C8 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,13 +133,16 @@
 				7A8DC9512F8AF485007411C8 /* Sources */,
 				7A8DC9522F8AF485007411C8 /* Frameworks */,
 				7A8DC9532F8AF485007411C8 /* Resources */,
+				7A8DCABC2F8C2760007411C8 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7A8DCAB62F8C2760007411C8 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7A8DC9572F8AF485007411C8 /* TimeTracker */,
+				7A8DCB012F8D000100000000 /* Shared */,
 			);
 			name = TimeTracker;
 			packageProductDependencies = (
@@ -69,6 +150,29 @@
 			productName = TimeTracker;
 			productReference = 7A8DC9552F8AF485007411C8 /* TimeTracker.app */;
 			productType = "com.apple.product-type.application";
+		};
+		7A8DCAA22F8C275F007411C8 /* TimeTrackerWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A8DCAB92F8C2760007411C8 /* Build configuration list for PBXNativeTarget "TimeTrackerWidgetExtension" */;
+			buildPhases = (
+				7A8DCA9F2F8C275F007411C8 /* Sources */,
+				7A8DCAA02F8C275F007411C8 /* Frameworks */,
+				7A8DCAA12F8C275F007411C8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7A8DCAA92F8C275F007411C8 /* TimeTrackerWidget */,
+				7A8DCB012F8D000100000000 /* Shared */,
+			);
+			name = TimeTrackerWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = TimeTrackerWidgetExtension;
+			productReference = 7A8DCAA32F8C275F007411C8 /* TimeTrackerWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,7 +185,10 @@
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					7A8DC9542F8AF485007411C8 = {
-						CreatedOnToolsVersion = 26.4;
+						CreatedOnToolsVersion = 17.0;
+					};
+					7A8DCAA22F8C275F007411C8 = {
+						CreatedOnToolsVersion = 17.0;
 					};
 				};
 			};
@@ -100,12 +207,20 @@
 			projectRoot = "";
 			targets = (
 				7A8DC9542F8AF485007411C8 /* TimeTracker */,
+				7A8DCAA22F8C275F007411C8 /* TimeTrackerWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		7A8DC9532F8AF485007411C8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A8DCAA12F8C275F007411C8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +237,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A8DCA9F2F8C275F007411C8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7A8DCAB62F8C2760007411C8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A8DCAA22F8C275F007411C8 /* TimeTrackerWidgetExtension */;
+			targetProxy = 7A8DCAB52F8C2760007411C8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		7A8DC9602F8AF486007411C8 /* Debug */ = {
@@ -178,12 +308,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = targeted;
@@ -237,11 +368,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_STRICT_CONCURRENCY = targeted;
 				VALIDATE_PRODUCT = YES;
@@ -253,6 +385,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TimeTracker/TimeTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
@@ -268,7 +401,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = catWebua.TimeTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexi.timetracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -285,6 +418,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TimeTracker/TimeTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
@@ -300,11 +434,73 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = catWebua.TimeTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexi.timetracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7A8DCABA2F8C2760007411C8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TimeTrackerWidget/TimeTrackerWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S3ZF4LYRPN;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimeTrackerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TimeTrackerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = catWebua.TimeTracker.TimeTrackerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7A8DCABB2F8C2760007411C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TimeTrackerWidget/TimeTrackerWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S3ZF4LYRPN;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimeTrackerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TimeTrackerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = catWebua.TimeTracker.TimeTrackerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -329,6 +525,15 @@
 			buildConfigurations = (
 				7A8DC9632F8AF486007411C8 /* Debug */,
 				7A8DC9642F8AF486007411C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A8DCAB92F8C2760007411C8 /* Build configuration list for PBXNativeTarget "TimeTrackerWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A8DCABA2F8C2760007411C8 /* Debug */,
+				7A8DCABB2F8C2760007411C8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

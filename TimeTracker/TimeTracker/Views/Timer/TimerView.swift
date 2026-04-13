@@ -21,6 +21,7 @@ struct TimerView: View {
 
     @State private var showProjectPicker = false
     @State private var showNoProjectAlert = false
+    @State private var showSettings = false
 
     // MARK: - Computed
 
@@ -33,255 +34,190 @@ struct TimerView: View {
 
     private var dailyGoalProgress: Double? {
         guard let project = timerVM.selectedProject, project.dailyGoalHours > 0 else { return nil }
-        return min(todayDurationForProject / (project.dailyGoalHours * 3600), 1.0)
+        let total = todayDurationForProject + (timerVM.isRunning ? Date().timeIntervalSince(timerVM.activeEntry?.startedAt ?? Date()) : 0)
+        return min(total / (project.dailyGoalHours * 3600), 1.0)
+    }
+
+    private var timeRemaining: TimeInterval? {
+        guard let project = timerVM.selectedProject, project.dailyGoalHours > 0 else { return nil }
+        let goal = project.dailyGoalHours * 3600
+        let total = todayDurationForProject + (timerVM.isRunning ? Date().timeIntervalSince(timerVM.activeEntry?.startedAt ?? Date()) : 0)
+        return max(goal - total, 0)
     }
 
     var body: some View {
+        @Bindable var vm = timerVM
+        
         NavigationStack {
             ZStack {
-                backgroundGradient
-
+                // Background is now global in ContentView
+                
+                // Content
                 VStack(spacing: 0) {
+                    customHeader
+                    
                     Spacer()
-                    projectSelector
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 32)
-
-                    timerDisplay
-                        .padding(.bottom, 24)
-
-                    if timerVM.isRunning {
-                        runningBadge
-                            .padding(.bottom, 24)
-                    }
-
-                    taskDescriptionField
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 48)
-
-                    Spacer()
-
-                    startStopButton
-                        .padding(.bottom, timerVM.selectedProject?.dailyGoalHours ?? 0 > 0 ? 24 : 48)
-                        // Skill: sensoryFeedback(_:trigger:) replaces UIImpactFeedbackGenerator (iOS 17+)
-                        .sensoryFeedback(.start, trigger: timerVM.isRunning) { old, new in !old && new }
-                        .sensoryFeedback(.stop,  trigger: timerVM.isRunning) { old, new in  old && !new }
-
-                    // Daily goal progress bar
-                    if let progress = dailyGoalProgress,
-                       let project = timerVM.selectedProject {
-                        dailyGoalBar(progress: progress, project: project)
-                            .padding(.horizontal, 28)
-                            .padding(.bottom, 48)
-                    }
-                }
-            }
-            .navigationTitle("FreelanceKit")
-            .navigationBarTitleDisplayMode(.large)
-        }
-        .sheet(isPresented: $showProjectPicker) {
-            ProjectPickerSheet(selectedProject: selectedProjectBinding)
-        }
-        .alert("Оберіть проект", isPresented: $showNoProjectAlert) {
-            Button("Обрати") { showProjectPicker = true }
-            Button("Скасувати", role: .cancel) {}
-        } message: {
-            Text("Потрібно обрати проект перед стартом.")
-        }
-    }
-
-    // MARK: - Subviews
-
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(.systemBackground),
-                Color.purple.opacity(0.08),
-                Color(.systemBackground)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
-    }
-
-    private var projectSelector: some View {
-        Button {
-            guard !timerVM.isRunning else { return }
-            showProjectPicker = true
-        } label: {
-            HStack(spacing: 12) {
-                if let project = timerVM.selectedProject {
-                    Circle()
-                        .fill(project.accentColor)
-                        .frame(width: 10, height: 10)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(project.name)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                        if !project.client.isEmpty {
-                            Text(project.client)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    
+                    // Main Timer Section
+                    TimerClockView(
+                        displayTime: timerVM.displayTime,
+                        isRunning: timerVM.isRunning,
+                        accentColor: timerVM.selectedProject?.accentColor ?? .cyan,
+                        progress: dailyGoalProgress ?? 0
+                    )
+                    .padding(.bottom, 40)
+                    
+                    // Stats Section (Directly from Mockup)
+                    VStack(spacing: 8) {
+                        if let project = timerVM.selectedProject {
+                            let currentTotal = todayDurationForProject + (timerVM.isRunning ? Date().timeIntervalSince(timerVM.activeEntry?.startedAt ?? Date()) : 0)
+                            HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("СЬОГОДНІ")
+                                            .font(.system(size: 8, weight: .black))
+                                            .tracking(1)
+                                            .foregroundStyle(.white.opacity(0.3))
+                                        Text(DurationFormatter.formatted(currentTotal))
+                                            .foregroundStyle(Color(hex: "BF5AF2"))
+                                            .font(.system(size: 16, weight: .bold, design: .monospaced))
+                                    }
+                                    
+                                    Text("/")
+                                        .foregroundStyle(.white.opacity(0.1))
+                                        .padding(.top, 10)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("ЦІЛЬ")
+                                            .font(.system(size: 8, weight: .black))
+                                            .tracking(1)
+                                            .foregroundStyle(.white.opacity(0.3))
+                                        Text(DurationFormatter.formatted(project.dailyGoalHours * 3600))
+                                            .foregroundStyle(.white.opacity(0.4))
+                                            .font(.system(size: 16, weight: .bold, design: .monospaced))
+                                    }
+                            }
+                            
+                            Text(project.name)
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            if let remaining = timeRemaining {
+                                Text("\(DurationFormatter.formatted(remaining)) remaining")
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                            
+                            if !timerVM.taskDescription.isEmpty {
+                                Text(timerVM.taskDescription)
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.3))
+                                    .padding(.top, 4)
+                            }
+                        } else {
+                            Button {
+                                showProjectPicker = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 18, weight: .bold))
+                                    Text("Оберіть проект")
+                                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                                }
+                                .foregroundStyle(Color(hex: "BF5AF2"))
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 24)
+                                .background {
+                                    Capsule()
+                                        .fill(Color(hex: "BF5AF2").opacity(0.1))
+                                        .overlay(Capsule().stroke(Color(hex: "BF5AF2").opacity(0.3), lineWidth: 1))
+                                }
+                                .shadow(color: Color(hex: "BF5AF2").opacity(0.4), radius: 10)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                } else {
-                    Image(systemName: "folder.badge.plus")
-                        .foregroundStyle(.purple)
-                    Text("Оберіть проект")
-                        .foregroundStyle(.secondary)
-                }
+                    .padding(.bottom, 40)
 
-                Spacer()
+                    Spacer()
 
-                if !timerVM.isRunning {
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        timerVM.selectedProject?.accentColor.opacity(0.3) ?? Color.clear,
-                        lineWidth: 1
+                    // Modern Control Bar
+                    ModernControlBar(
+                        isRunning: timerVM.isRunning,
+                        accentColor: timerVM.selectedProject?.accentColor ?? .cyan,
+                        onPlayPause: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                handleStartStop()
+                            }
+                        },
+                        onSettings: {
+                            // Placeholder for settings
+                        }
                     )
-            )
-        }
-        .disabled(timerVM.isRunning)
-    }
-
-    private var timerDisplay: some View {
-        Text(timerVM.displayTime)
-            .font(.system(size: 72, weight: .thin, design: .monospaced))
-            .foregroundStyle(timerVM.isRunning ? .white : .secondary)
-            .contentTransition(.numericText())
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: timerVM.displayTime)
-            .shadow(
-                color: timerVM.isRunning ? Color.purple.opacity(0.3) : .clear,
-                radius: 20
-            )
-    }
-
-    private var runningBadge: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(.green)
-                .frame(width: 6, height: 6)
-            Text("тікає")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 6)
-        .background(Color.green.opacity(0.1), in: Capsule())
-        .overlay(Capsule().stroke(Color.green.opacity(0.2), lineWidth: 1))
-    }
-
-    // Skill: @Bindable for injected @Observable objects needing bindings (iOS 17+)
-    @ViewBuilder
-    private var taskDescriptionField: some View {
-        @Bindable var vm = timerVM
-        if !timerVM.isRunning {
-            TextField("Що зараз робиш? (необов'язково)", text: $vm.taskDescription)
-                .textFieldStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 14)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-        } else if let desc = timerVM.activeEntry?.taskDescription, !desc.isEmpty {
-            Text(desc)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        }
-    }
-
-    private var startStopButton: some View {
-        Button {
-            if timerVM.isRunning {
-                timerVM.stop(context: context)
-            } else {
-                if timerVM.selectedProject != nil {
-                    timerVM.start(context: context)
-                } else {
-                    showNoProjectAlert = true
+                    .padding(.bottom, 100)
                 }
             }
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(
-                        timerVM.isRunning
-                            ? LinearGradient(colors: [.red, Color(hex: "#FF6B6B")], startPoint: .top, endPoint: .bottom)
-                            : LinearGradient(colors: [.purple, Color(hex: "#7C3AED")], startPoint: .top, endPoint: .bottom)
-                    )
-                    .frame(width: 96, height: 96)
-                    .shadow(
-                        color: (timerVM.isRunning ? Color.red : Color.purple).opacity(0.45),
-                        radius: 24,
-                        y: 8
-                    )
+            .toolbar(.hidden)
+            .sheet(isPresented: $showProjectPicker) {
+                ProjectPickerSheet(selectedProject: selectedProjectBinding)
+            }
+            .alert("Оберіть проект", isPresented: $showNoProjectAlert) {
+                Button("Обрати") { showProjectPicker = true }
+                Button("Скасувати", role: .cancel) {}
+            } message: {
+                Text("Потрібно обрати проект перед стартом.")
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
+        }
+    }
 
-                Image(systemName: timerVM.isRunning ? "stop.fill" : "play.fill")
-                    .font(.system(size: 34, weight: .semibold))
+    private var customHeader: some View {
+        HStack {
+            Spacer()
+            
+            VStack(spacing: 4) {
+                Text("WORK SESSION")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .tracking(2)
+                    .foregroundStyle(.white.opacity(0.3))
+                
+                Text(timerVM.selectedProject?.name ?? "Ring of Progress")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .offset(x: timerVM.isRunning ? 0 : 3)
             }
+            
+            Spacer()
         }
-        .buttonStyle(.plain)
-        .scaleEffect(timerVM.isRunning ? 1.05 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: timerVM.isRunning)
+        .overlay(alignment: .trailing) {
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Color(hex: "BF5AF2"))
+                    .shadow(color: Color(hex: "BF5AF2").opacity(0.3), radius: 5)
+            }
+            .padding(.trailing, 24)
+        }
+        .padding(.top, 20)
     }
 
-    // MARK: - Daily Goal Bar
 
-    private func dailyGoalBar(progress: Double, project: Project) -> some View {
-        let isDone = progress >= 1.0
-        let barColor: Color = isDone ? .green : project.accentColor
-        let elapsed = todayDurationForProject + (timerVM.isRunning ? Date().timeIntervalSince(timerVM.activeEntry?.startedAt ?? Date()) : 0)
-        let elapsedDisplay = DurationFormatter.short(elapsed)
-        let goalDisplay = "\(Int(project.dailyGoalHours))г"
-
-        return VStack(spacing: 6) {
-            HStack {
-                Text(isDone ? "Ціль досягнута 🎉" : "Денна ціль")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("\(elapsedDisplay) / \(goalDisplay)")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(barColor)
+    private func handleStartStop() {
+        if timerVM.isRunning {
+            timerVM.stop(context: context)
+        } else {
+            if timerVM.selectedProject != nil {
+                timerVM.start(context: context)
+            } else {
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.warning)
+                showNoProjectAlert = true
             }
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 5)
-                    Capsule()
-                        .fill(barColor)
-                        .frame(width: geo.size.width * progress, height: 5)
-                        .animation(.spring(response: 0.6), value: progress)
-                }
-            }
-            .frame(height: 5)
         }
     }
 
-    // MARK: - Helpers
 
     private var selectedProjectBinding: Binding<Project?> {
         Binding(

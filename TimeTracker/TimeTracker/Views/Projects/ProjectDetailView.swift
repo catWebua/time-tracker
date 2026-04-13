@@ -11,7 +11,6 @@ struct ProjectDetailView: View {
         project.completedEntries.sorted { $0.startedAt > $1.startedAt }
     }
 
-    /// Today's total seconds for this project
     private var todayDuration: TimeInterval {
         project.completedEntries
             .filter { Calendar.current.isDateInToday($0.startedAt) }
@@ -19,260 +18,245 @@ struct ProjectDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                statsCard
+        ZStack {
+            // Background is global, but we can add a subtle project-color glow at the top
+            ProjectAuraView(color: project.accentColor)
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    // Custom Header
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(project.name)
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            if !project.client.isEmpty {
+                                Text(project.client)
+                                    .font(.headline)
+                                    .foregroundStyle(project.accentColor.opacity(0.8))
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            projectToEdit = project
+                        } label: {
+                            Image(systemName: "square.and.pencil")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .padding(12)
+                                .glassCard(cornerRadius: 12, opacity: 0.15)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 20)
 
-                if let progress = project.budgetProgress {
-                    budgetCard(progress: progress)
-                }
+                    // Stats Grid
+                    VStack(spacing: 16) {
+                        HStack(spacing: 16) {
+                            GlassDashboardTile(
+                                title: "ВСЬОГО",
+                                value: DurationFormatter.short(project.totalDuration),
+                                unit: "год",
+                                icon: "clock.fill",
+                                color: project.accentColor
+                            )
+                            
+                            GlassDashboardTile(
+                                title: "СЕСІЙ",
+                                value: "\(project.completedEntries.count)",
+                                unit: "шт",
+                                icon: "list.bullet",
+                                color: .white
+                            )
+                        }
+                        
+                        if project.hourlyRate > 0 {
+                            GlassDashboardTile(
+                                title: "ЗАРОБЛЕНО",
+                                value: String(format: "%.0f", project.totalEarned),
+                                unit: project.currencySymbol,
+                                icon: "banknote.fill",
+                                color: .green
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
 
-                if project.dailyGoalHours > 0 {
-                    dailyGoalCard
-                }
+                    // Goals Section
+                    VStack(spacing: 16) {
+                        if let progress = project.budgetProgress {
+                            ProjectBudgetCard(project: project, progress: progress)
+                        }
+                        
+                        if project.dailyGoalHours > 0 {
+                            ProjectDailyGoalCard(project: project, todayDuration: todayDuration)
+                        }
+                    }
+                    .padding(.horizontal)
 
-                if sortedEntries.isEmpty {
-                    emptyEntries
-                } else {
-                    entriesSection
+                    // Recent Entries
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("ОСТАННІ СЕСІЇ")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .tracking(1.5)
+                                .foregroundStyle(.white.opacity(0.4))
+                            
+                            Spacer()
+                            
+                            let unbilled = project.unbilledEntries.count
+                            if unbilled > 0 {
+                                Text("\(unbilled) НЕ ОПЛАЧЕНО")
+                                    .font(.system(size: 9, weight: .black, design: .rounded))
+                                    .foregroundStyle(.orange)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .glassCard(cornerRadius: 6, opacity: 0.1)
+                            }
+                        }
+                        .padding(.horizontal)
+
+                        if sortedEntries.isEmpty {
+                            emptyEntriesState
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(sortedEntries.prefix(10)) { entry in
+                                    TimeEntryRow(entry: entry, showProjectName: false)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    
+                    Spacer(minLength: 120)
                 }
             }
-            .padding()
         }
-        .navigationTitle(project.name)
-        .navigationBarTitleDisplayMode(.large)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    projectToEdit = project
-                } label: {
-                    Image(systemName: "pencil.circle")
-                        .font(.title3)
-                }
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .sheet(item: $projectToEdit) { editProject in
             ProjectFormView(project: editProject)
         }
     }
 
-    // MARK: - Stats Card
-
-    private var statsCard: some View {
-        HStack(spacing: 0) {
-            statItem(
-                value: DurationFormatter.short(project.totalDuration),
-                label: "Всього часу",
-                icon: "clock.fill"
-            )
-
-            Divider()
-                .overlay(Color.white.opacity(0.1))
-                .frame(maxHeight: 60)
-
-            statItem(
-                value: "\(project.completedEntries.count)",
-                label: "Сесій",
-                icon: "list.bullet"
-            )
-
-            if project.hourlyRate > 0 {
-                Divider()
-                    .overlay(Color.white.opacity(0.1))
-                    .frame(maxHeight: 60)
-
-                statItem(
-                    value: project.formattedEarned,
-                    label: "Зароблено",
-                    icon: "banknote.fill",
-                    accentColor: project.accentColor
-                )
-            }
-        }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.08), lineWidth: 1))
-    }
-
-    private func statItem(value: String, label: String, icon: String, accentColor: Color = .purple) -> some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.footnote)
-                .foregroundStyle(accentColor)
-            Text(value)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+    private var emptyEntriesState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "timer")
+                .font(.largeTitle)
+                .foregroundStyle(.white.opacity(0.1))
+            Text("Ще немає сесій")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.3))
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .glassCard(cornerRadius: 24, opacity: 0.05)
+        .padding(.horizontal)
     }
+}
 
-    // MARK: - Budget Card
+// MARK: - Subviews
 
-    private func budgetCard(progress: Double) -> some View {
+struct ProjectAuraView: View {
+    let color: Color
+    
+    var body: some View {
+        GeometryReader { _ in
+            ZStack {
+                color.opacity(0.1)
+                    .blur(radius: 100)
+                    .offset(y: -200)
+                
+                Circle()
+                    .fill(color.opacity(0.05))
+                    .frame(width: 400, height: 400)
+                    .blur(radius: 80)
+                    .offset(x: 100, y: -150)
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct ProjectBudgetCard: View {
+    let project: Project
+    let progress: Double
+    
+    var body: some View {
         let isOver = progress >= 1.0
-        let isWarning = progress >= 0.8 && !isOver
-        let barColor: Color = isOver ? .red : isWarning ? .orange : project.accentColor
-
-        return VStack(alignment: .leading, spacing: 10) {
+        let barColor = isOver ? Color.red : project.accentColor
+        
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: isOver ? "exclamationmark.triangle.fill" : "chart.bar.fill")
+                Label("Бюджет", systemImage: isOver ? "exclamationmark.triangle.fill" : "chart.pie.fill")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(barColor)
-                Text("Бюджет годин")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
                 Spacer()
                 Text("\(DurationFormatter.short(project.totalDuration)) / \(Int(project.estimatedHours))г")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.5))
             }
-
-            // Progress bar
+            
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.08))
-                        .frame(height: 8)
-                    RoundedRectangle(cornerRadius: 4)
+                    Capsule()
+                        .fill(Color.white.opacity(0.05))
+                    Capsule()
                         .fill(barColor)
-                        .frame(width: geo.size.width * progress, height: 8)
-                        // Skill: animation(_:value:) includes value parameter
-                        .animation(.spring(response: 0.5), value: progress)
+                        .frame(width: geo.size.width * min(progress, 1.0))
+                        .shadow(color: barColor.opacity(0.3), radius: 6)
                 }
             }
             .frame(height: 8)
-
-            if isOver {
-                Text("Бюджет перевищено!")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            } else if isWarning {
-                Text("Залишилось менше 20% бюджету")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            } else {
-                Text("\(Int((1 - progress) * project.estimatedHours))г залишилось")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            
+            Text(isOver ? "Ліміт вичерпано" : "\(Int(project.estimatedHours - (project.totalDuration/3600)))г залишилось")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.3))
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(barColor.opacity(0.3), lineWidth: 1)
-        )
+        .padding(20)
+        .glassCard(cornerRadius: 24, opacity: 0.1)
     }
+}
 
-    // MARK: - Daily Goal Card
-
-    private var dailyGoalCard: some View {
+struct ProjectDailyGoalCard: View {
+    let project: Project
+    let todayDuration: TimeInterval
+    
+    var body: some View {
         let goalSeconds = project.dailyGoalHours * 3600
         let progress = min(todayDuration / goalSeconds, 1.0)
         let isDone = todayDuration >= goalSeconds
-
-        return HStack(spacing: 14) {
+        
+        HStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.08), lineWidth: 4)
+                    .stroke(Color.white.opacity(0.05), lineWidth: 4)
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(isDone ? Color.green : project.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .stroke(
+                        isDone ? Color.green : project.accentColor,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
                     .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 0.6), value: progress)
+                    .shadow(color: (isDone ? Color.green : project.accentColor).opacity(0.3), radius: 4)
             }
-            .frame(width: 44, height: 44)
-
+            .frame(width: 48, height: 48)
+            
             VStack(alignment: .leading, spacing: 2) {
-                Text(isDone ? "Денна ціль досягнута! 🎉" : "Денна ціль")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text("\(DurationFormatter.short(todayDuration)) з \(Int(project.dailyGoalHours))г сьогодні")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isDone ? Color.green.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    // MARK: - Entries
-
-    private var entriesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Сесії")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                let unbilled = project.unbilledEntries.count
-                if unbilled > 0 {
-                    Text("\(unbilled) не оплачено")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.orange.opacity(0.12), in: Capsule())
-                }
-            }
-            .padding(.horizontal, 4)
-
-            ForEach(sortedEntries) { entry in
-                entryRow(entry)
-            }
-        }
-    }
-
-    private func entryRow(_ entry: TimeEntry) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                if !entry.taskDescription.isEmpty {
-                    Text(entry.taskDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                }
-                Text(entry.startedAt.relativeLabel())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            HStack(spacing: 8) {
-                if entry.isBilled {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
-                Text(entry.formattedDuration)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                Text(isDone ? "Ціль досягнута! 🎉" : "Денна ціль")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .monospacedDigit()
+                Text("\(DurationFormatter.short(todayDuration)) з \(Int(project.dailyGoalHours))г сьогодні")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
             }
+            
+            Spacer()
         }
-        .padding(14)
-        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(entry.isBilled ? Color.green.opacity(0.2) : Color.clear, lineWidth: 1)
-        )
-    }
-
-    // Skill: ContentUnavailableView for empty states (iOS 17+)
-    private var emptyEntries: some View {
-        ContentUnavailableView {
-            Label("Немає сесій", systemImage: "timer")
-        } description: {
-            Text("Запусти таймер для цього проекту")
-        }
-        .padding(.top, 20)
+        .padding(20)
+        .glassCard(cornerRadius: 24, opacity: 0.1)
     }
 }

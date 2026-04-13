@@ -13,6 +13,6 @@ struct TimeTrackerApp: App {
                 .environment(timerVM)
                 .environment(notificationManager)
         }
-        .modelContainer(for: [Project.self, TimeEntry.self])
+        .modelContainer(DataController.sharedContainer)
     }
 }
