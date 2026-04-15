@@ -18,7 +18,8 @@ final class TimeEntry {
         project: Project? = nil,
         taskDescription: String = "",
         startedAt: Date = Date(),
-        tags: [String] = []
+        tags: [String] = [],
+        isBilled: Bool = false
     ) {
         self.id = UUID()
         self.project = project
@@ -26,7 +27,7 @@ final class TimeEntry {
         self.startedAt = startedAt
         self.endedAt = nil
         self.durationSeconds = 0
-        self.isBilled = false
+        self.isBilled = isBilled
         self.tags = tags
     }
 

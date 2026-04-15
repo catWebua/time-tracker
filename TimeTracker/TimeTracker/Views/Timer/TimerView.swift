@@ -97,9 +97,19 @@ struct TimerView: View {
                                     }
                             }
                             
-                            Text(project.name)
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                            Button {
+                                showProjectPicker = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Text(project.name)
+                                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.system(size: 18, weight: .heavy))
+                                        .foregroundStyle(project.accentColor)
+                                }
                                 .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
                             
                             if let remaining = timeRemaining {
                                 Text("\(DurationFormatter.formatted(remaining)) remaining")
@@ -113,6 +123,7 @@ struct TimerView: View {
                                     .foregroundStyle(.white.opacity(0.3))
                                     .padding(.top, 4)
                             }
+
                         } else {
                             Button {
                                 showProjectPicker = true

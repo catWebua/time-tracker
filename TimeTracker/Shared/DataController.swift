@@ -15,11 +15,13 @@ final class DataController {
         
         // Configuration for the shared store in App Group
         let appGroupID = "group.catWebua.TimeTracker"
-        guard let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
-            fatalError("CRITICAL: Could not find App Group container for \(appGroupID)")
+        let storeURL: URL
+        if let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+            storeURL = appGroupURL.appendingPathComponent("TimeTracker.store")
+        } else {
+            print("WARNING: Could not find App Group container for \(appGroupID). Falling back to local documents directory.")
+            storeURL = URL.documentsDirectory.appendingPathComponent("TimeTracker.store")
         }
-        
-        let storeURL = appGroupURL.appendingPathComponent("TimeTracker.store")
         let modelConfiguration = ModelConfiguration(
             "TimeTracker",
             schema: schema,

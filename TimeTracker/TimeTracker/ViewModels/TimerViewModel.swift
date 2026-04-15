@@ -11,8 +11,27 @@ final class TimerViewModel {
     var displayTime: String = "00:00:00"
     var isRunning: Bool = false
     var activeEntry: TimeEntry?
-    var selectedProject: Project?
     var taskDescription: String = ""
+    
+    var selectedProject: Project? {
+        didSet {
+            // Stop current timer if project changes while running
+            if isRunning, selectedProject != oldValue, let activeEntry = activeEntry {
+                if let context = activeEntry.modelContext {
+                    self.stop(context: context)
+                }
+            }
+        }
+    }
+    
+    var isBilled: Bool = false {
+        didSet {
+            if isRunning, let activeEntry = activeEntry {
+                activeEntry.isBilled = isBilled
+                try? activeEntry.modelContext?.save()
+            }
+        }
+    }
 
     // MARK: - Private
     private var timer: Timer?
@@ -26,7 +45,8 @@ final class TimerViewModel {
         let entry = TimeEntry(
             project: project,
             taskDescription: taskDescription,
-            startedAt: Date()
+            startedAt: Date(),
+            isBilled: isBilled
         )
         context.insert(entry)
         try? context.save()
@@ -72,6 +92,7 @@ final class TimerViewModel {
         if let entry = try? context.fetch(descriptor).first {
             activeEntry = entry
             selectedProject = entry.project
+            isBilled = entry.isBilled
             isRunning = true
             startTicking()
             

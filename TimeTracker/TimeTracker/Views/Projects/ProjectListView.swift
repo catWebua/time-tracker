@@ -94,6 +94,14 @@ struct ProjectListView: View {
                                 .opacity(0.6)
                         }
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            Button { unarchiveProject(project) } label: {
+                                Label("Розархівувати", systemImage: "archivebox.fill")
+                            }
+                            Button(role: .destructive) { deleteProject(project) } label: {
+                                Label("Видалити", systemImage: "trash")
+                            }
+                        }
                     }
                 } label: {
                     Text("Архів (\(archivedProjects.count))")
@@ -110,6 +118,11 @@ struct ProjectListView: View {
 
     private func archiveProject(_ project: Project) {
         project.isArchived = true
+        try? context.save()
+    }
+
+    private func unarchiveProject(_ project: Project) {
+        project.isArchived = false
         try? context.save()
     }
 

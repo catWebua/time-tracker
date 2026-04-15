@@ -131,6 +131,61 @@ struct ProjectDetailView: View {
                         }
                     }
                     
+                    if !project.isArchived {
+                        Button {
+                            withAnimation {
+                                project.isArchived = true
+                                for entry in project.entries {
+                                    entry.isBilled = true
+                                }
+                                try? context.save()
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.system(size: 20))
+                                Text("Завершити проект")
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.green.opacity(0.8))
+                                    .shadow(color: .green.opacity(0.5), radius: 10, y: 5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.top, 24)
+                    } else {
+                        Button {
+                            withAnimation {
+                                project.isArchived = false
+                                try? context.save()
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "archivebox.fill")
+                                    .font(.system(size: 20))
+                                Text("Відновити з архіву")
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.blue.opacity(0.8))
+                                    .shadow(color: .blue.opacity(0.5), radius: 10, y: 5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.top, 24)
+                    }
+                    
                     Spacer(minLength: 120)
                 }
             }

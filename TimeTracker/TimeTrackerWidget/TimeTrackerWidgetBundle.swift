@@ -93,7 +93,17 @@ struct TimerWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TimerWidgetProvider()) { entry in
             TimerWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(for: .widget) {
+                    ZStack {
+                        Color(red: 0.05, green: 0.03, blue: 0.12)
+                        
+                        LinearGradient(
+                            colors: [Color(hex: entry.projectColorHex ?? "#A855F7").opacity(0.3), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                }
         }
         .configurationDisplayName("FreelanceKit Таймер")
         .description("Дивись і керуй таймером прямо з Home Screen.")
@@ -124,48 +134,61 @@ struct TimerWidgetView: View {
                 Circle()
                     .fill(entry.isRunning ? accentColor : Color.secondary)
                     .frame(width: 8, height: 8)
-                Text(entry.isRunning ? "Активний" : "Зупинено")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .shadow(color: entry.isRunning ? accentColor : .clear, radius: 4)
+                Text(entry.isRunning ? "АКТИВНО" : "ЗУПИНЕНО")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
             }
 
             Spacer()
 
             Text(entry.displayTime)
-                .font(.system(.title2, design: .monospaced, weight: .medium))
+                .font(.system(.title2, design: .monospaced, weight: .bold))
+                .foregroundStyle(.white)
+                .shadow(color: accentColor.opacity(0.5), radius: 4, x: 0, y: 0)
                 .minimumScaleFactor(0.7)
 
             if let name = entry.projectName {
-                Text(name)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(name.uppercased())
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(accentColor)
+                    .tracking(1)
                     .lineLimit(1)
             }
         }
-        .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 
     private var mediumView: some View {
         HStack(spacing: 16) {
+            // Neon vertical glowing line
+            RoundedRectangle(cornerRadius: 4)
+                .fill(accentColor)
+                .frame(width: 4)
+                .shadow(color: accentColor.opacity(0.8), radius: 4, x: 0, y: 0)
+                
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Circle()
                         .fill(entry.isRunning ? accentColor : Color.secondary)
                         .frame(width: 8, height: 8)
-                    Text(entry.isRunning ? "Таймер іде" : "Таймер зупинено")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .shadow(color: entry.isRunning ? accentColor : .clear, radius: 4)
+                    Text(entry.isRunning ? "ТАЙМЕР ЗАПУЩЕНО" : "ЗУПИНЕНО")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
 
                 Text(entry.displayTime)
-                    .font(.system(.largeTitle, design: .monospaced, weight: .thin))
+                    .font(.system(.largeTitle, design: .monospaced, weight: .bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: accentColor.opacity(0.5), radius: 6, x: 0, y: 0)
                     .minimumScaleFactor(0.6)
 
                 if let name = entry.projectName {
-                    Text(name)
-                        .font(.subheadline)
+                    Text(name.uppercased())
+                        .font(.system(size: 12, weight: .black, design: .rounded))
                         .foregroundStyle(accentColor)
+                        .tracking(1)
                         .lineLimit(1)
                 }
             }
@@ -174,12 +197,18 @@ struct TimerWidgetView: View {
 
             // Deep link button to open app
             Link(destination: URL(string: "freelancekit://timer")!) {
-                Image(systemName: entry.isRunning ? "stop.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 44))
-                    .foregroundStyle(entry.isRunning ? .red : accentColor)
+                ZStack {
+                    Circle()
+                        .fill(entry.isRunning ? Color.red.opacity(0.2) : accentColor.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                        
+                    Image(systemName: entry.isRunning ? "stop.fill" : "play.fill")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundStyle(entry.isRunning ? Color.red : accentColor)
+                        .shadow(color: entry.isRunning ? Color.red : accentColor, radius: 4)
+                }
             }
         }
-        .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 }
