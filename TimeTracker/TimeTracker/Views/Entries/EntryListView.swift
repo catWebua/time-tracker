@@ -63,9 +63,9 @@ struct EntryListView: View {
                         .padding(.bottom, 12)
 
                         // Billing Filter Segmented Control
-                        Picker("Фільтр", selection: $billingFilter) {
+                        Picker(LocalizedStringKey("Фільтр"), selection: $billingFilter) {
                             ForEach(BillingFilter.allCases, id: \.self) { f in
-                                Text(f.rawValue).tag(f)
+                                Text(LocalizedStringKey(f.rawValue)).tag(f)
                             }
                         }
                         .pickerStyle(.segmented)
@@ -81,6 +81,8 @@ struct EntryListView: View {
                         }
                     }
                 }
+                .safeAreaPadding(.top)
+                .safeAreaPadding(.bottom, 100)
             }
             .toolbar(.hidden)
         }
@@ -146,7 +148,7 @@ struct EntryListView: View {
                                         withAnimation { toggleBilled(entry) }
                                     } label: {
                                         Label(
-                                            entry.isBilled ? "Не оплачено" : "Оплачено",
+                                            LocalizedStringKey(entry.isBilled ? "Не оплачено" : "Оплачено"),
                                             systemImage: entry.isBilled ? "xmark.circle" : "checkmark.circle"
                                         )
                                     }
@@ -156,7 +158,7 @@ struct EntryListView: View {
                                     Button(role: .destructive) {
                                         deleteEntry(entry)
                                     } label: {
-                                        Label("Видалити", systemImage: "trash")
+                                        Label(LocalizedStringKey("Видалити"), systemImage: "trash")
                                     }
                                 }
                         }

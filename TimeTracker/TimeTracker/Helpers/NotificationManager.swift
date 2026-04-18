@@ -38,7 +38,7 @@ final class NotificationManager {
 
         let content = UNMutableNotificationContent()
         content.title = "FreelanceKit"
-        content.body = "Не забудь запустити таймер!"
+        content.body = AppLocalization.string("notification_daily_body")
         content.sound = .default
 
         var comps = DateComponents()
@@ -59,8 +59,8 @@ final class NotificationManager {
         removeNotification(id: NotificationID.longRunning)
 
         let content = UNMutableNotificationContent()
-        content.title = "Таймер ще тікає ⏱"
-        content.body = "Ти відслідковуєш час вже \(Int(hours)) год. — може час зупинитись?"
+        content.title = AppLocalization.string("notification_long_running_title")
+        content.body = String(format: AppLocalization.string("notification_long_running_body"), Int(hours))
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(

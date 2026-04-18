@@ -193,11 +193,12 @@
 				};
 			};
 			buildConfigurationList = 7A8DC9502F8AF485007411C8 /* Build configuration list for PBXProject "TimeTracker" */;
-			developmentRegion = en;
+			developmentRegion = uk;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				uk,
 			);
 			mainGroup = 7A8DC94C2F8AF485007411C8;
 			minimizedProjectReferenceProxies = 1;
@@ -388,6 +389,7 @@
 				CODE_SIGN_ENTITLEMENTS = TimeTracker/TimeTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = uk;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -421,6 +423,7 @@
 				CODE_SIGN_ENTITLEMENTS = TimeTracker/TimeTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = uk;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -454,6 +457,7 @@
 				CODE_SIGN_ENTITLEMENTS = TimeTrackerWidget/TimeTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = uk;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeTrackerWidget/Info.plist;
@@ -485,6 +489,7 @@
 				CODE_SIGN_ENTITLEMENTS = TimeTrackerWidget/TimeTrackerWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = uk;
 				DEVELOPMENT_TEAM = S3ZF4LYRPN;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeTrackerWidget/Info.plist;

@@ -13,22 +13,22 @@ struct ContentView: View {
             AuraBackground()
             
             // 2. Main content switch
-            ZStack {
-                switch selectedTab {
-                case 0:
-                    TimerView()
-                case 1:
-                    ProjectListView()
-                case 2:
-                    EntryListView()
-                case 3:
-                    ReportsView()
-                default:
-                    TimerView()
-                }
+            TabView(selection: $selectedTab) {
+                TimerView()
+                    .tag(0)
+                
+                ProjectListView()
+                    .tag(1)
+                
+                EntryListView()
+                    .tag(2)
+                
+                ReportsView()
+                    .tag(3)
             }
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-            .id(selectedTab)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut, value: selectedTab)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .safeAreaInset(edge: .bottom) {
                 GlassTabBar(selectedTab: $selectedTab)
             }

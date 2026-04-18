@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(NotificationManager.self) private var notificationManager
+    @AppStorage(AppLanguage.storageKey) private var appLanguage = AppLanguage.ukrainian.rawValue
 
     // Reminder preferences
     @AppStorage("dailyReminderEnabled") private var dailyReminderEnabled = false
@@ -15,6 +17,13 @@ struct SettingsView: View {
     @State private var reminderTime = Date()
     @State private var showPermissionDeniedAlert = false
 
+    private var selectedLanguage: Binding<AppLanguage> {
+        Binding(
+            get: { AppLanguage(rawValue: appLanguage) ?? .ukrainian },
+            set: { appLanguage = $0.rawValue }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -22,14 +31,53 @@ struct SettingsView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 32) {
-                        // Title
-                        Text("Налаштування")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal)
-                            .padding(.top, 20)
+                        // Title & Close Button
+                        HStack {
+                            Text(LocalizedStringKey("Налаштування"))
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            Spacer()
+                            
+                            Button {
+                                dismiss()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.white.opacity(0.2))
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
 
                         VStack(spacing: 24) {
+                            GlassInputGroup(title: "Мова") {
+                                VStack(spacing: 12) {
+                                    ForEach(AppLanguage.allCases) { language in
+                                        Button {
+                                            selectedLanguage.wrappedValue = language
+                                        } label: {
+                                            HStack {
+                                                Text(language.titleKey)
+                                                    .foregroundStyle(.white.opacity(0.85))
+                                                Spacer()
+                                                Image(systemName: selectedLanguage.wrappedValue == language ? "checkmark.circle.fill" : "circle")
+                                                    .foregroundStyle(selectedLanguage.wrappedValue == language ? .purple : .white.opacity(0.3))
+                                            }
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 12)
+                                            .background(
+                                                Color.white.opacity(selectedLanguage.wrappedValue == language ? 0.12 : 0.05),
+                                                in: RoundedRectangle(cornerRadius: 14)
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+
                             // MARK: - Notifications
                             GlassInputGroup(title: "СПОВІЩЕННЯ") {
                                 VStack(spacing: 20) {
@@ -127,10 +175,10 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 10) {
-                                        instructionStep(n: "1", text: "Довго натисни на Home Screen")
-                                        instructionStep(n: "2", text: "Натисни «+» у кутку")
-                                        instructionStep(n: "3", text: "Знайди «FreelanceKit»")
-                                        instructionStep(n: "4", text: "Вибери розмір та додай")
+                                        instructionStep(n: "1", text: AppLocalization.string("Довго натисни на Home Screen"))
+                                        instructionStep(n: "2", text: AppLocalization.string("Натисни «+» у кутку"))
+                                        instructionStep(n: "3", text: AppLocalization.string("Знайди «FreelanceKit»"))
+                                        instructionStep(n: "4", text: AppLocalization.string("Вибери розмір та додай"))
                                     }
                                 }
                             }
@@ -138,15 +186,15 @@ struct SettingsView: View {
                             // MARK: - About
                             GlassInputGroup(title: "ПРО ЗАСТОСУНОК") {
                                 VStack(spacing: 16) {
-                                    infoRow(label: "Версія", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0", icon: "info.circle")
-                                    infoRow(label: "Сховище", value: "SwiftData (локально)", icon: "database")
-                                    infoRow(label: "iCloud Sync", value: "Незабаром", icon: "cloud.fill", active: false)
+                                    infoRow(label: AppLocalization.string("Версія"), value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0", icon: "info.circle")
+                                    infoRow(label: AppLocalization.string("Сховище"), value: AppLocalization.string("SwiftData (локально)"), icon: "database")
+                                    infoRow(label: AppLocalization.string("iCloud Sync"), value: AppLocalization.string("Незабаром"), icon: "cloud.fill", active: false)
                                 }
                             }
                         }
                         .padding(.horizontal)
                         
-                        Text("Made with 💜 for Freelancers")
+                        Text(LocalizedStringKey("Зроблено з 💜 для Фрілансерів"))
                             .font(.caption2)
                             .foregroundStyle(.white.opacity(0.2))
                             .frame(maxWidth: .infinity)

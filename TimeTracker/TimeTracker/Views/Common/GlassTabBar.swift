@@ -14,29 +14,7 @@ struct GlassTabBar: View {
         HStack(spacing: 0) {
             ForEach(tabs, id: \.0) { index, title, icon in
                 Spacer()
-                
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedTab = index
-                    }
-                } label: {
-                    VStack(spacing: 6) {
-                        Image(systemName: selectedTab == index ? (icon == "timer" ? "stopwatch.fill" : (icon == "list.bullet" ? "list.clipboard.fill" : "\(icon).fill")) : icon)
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(selectedTab == index ? Color(hex: "BF5AF2") : .white.opacity(0.25))
-                            .frame(height: 28)
-                            .shadow(color: selectedTab == index ? Color(hex: "BF5AF2").opacity(0.4) : .clear, radius: 8)
-                        
-                        Text(title)
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(selectedTab == index ? Color(hex: "BF5AF2") : .white.opacity(0.2))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .sensoryFeedback(.selection, trigger: selectedTab == index)
-                
+                TabButton(index: index, selectedTab: $selectedTab, title: title, icon: icon)
                 Spacer()
             }
         }
@@ -59,7 +37,38 @@ struct GlassTabBar: View {
                 }
         }
         .padding(.horizontal, 20)
-        .padding(.bottom, 20) // Premium floating look
+        .padding(.bottom, 20)
+        .sensoryFeedback(.selection, trigger: selectedTab)
+    }
+}
+
+private struct TabButton: View {
+    let index: Int
+    @Binding var selectedTab: Int
+    let title: String
+    let icon: String
+    
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedTab = index
+            }
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: selectedTab == index ? (icon == "timer" ? "stopwatch.fill" : (icon == "list.bullet" ? "list.clipboard.fill" : "\(icon).fill")) : icon)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(selectedTab == index ? Color(hex: "BF5AF2") : .white.opacity(0.25))
+                    .frame(height: 28)
+                    .shadow(color: selectedTab == index ? Color(hex: "BF5AF2").opacity(0.4) : .clear, radius: 8)
+                
+                Text(LocalizedStringKey(title))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(selectedTab == index ? Color(hex: "BF5AF2") : .white.opacity(0.2))
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

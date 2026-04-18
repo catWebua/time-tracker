@@ -13,7 +13,7 @@ struct GlassDashboardTile: View {
                 Image(systemName: icon)
                     .font(.system(size: 14))
                     .foregroundStyle(color)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .tracking(1)
                     .foregroundStyle(.white.opacity(0.3))
@@ -23,7 +23,7 @@ struct GlassDashboardTile: View {
                 Text(value)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text(unit)
+                Text(LocalizedStringKey(unit))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white.opacity(0.3))
             }

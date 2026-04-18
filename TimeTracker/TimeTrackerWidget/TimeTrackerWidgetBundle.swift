@@ -135,7 +135,7 @@ struct TimerWidgetView: View {
                     .fill(entry.isRunning ? accentColor : Color.secondary)
                     .frame(width: 8, height: 8)
                     .shadow(color: entry.isRunning ? accentColor : .clear, radius: 4)
-                Text(entry.isRunning ? "АКТИВНО" : "ЗУПИНЕНО")
+                Text(entry.isRunning ? LocalizedStringKey("АКТИВНО") : LocalizedStringKey("ЗУПИНЕНО"))
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -173,7 +173,7 @@ struct TimerWidgetView: View {
                         .fill(entry.isRunning ? accentColor : Color.secondary)
                         .frame(width: 8, height: 8)
                         .shadow(color: entry.isRunning ? accentColor : .clear, radius: 4)
-                    Text(entry.isRunning ? "ТАЙМЕР ЗАПУЩЕНО" : "ЗУПИНЕНО")
+                    Text(entry.isRunning ? LocalizedStringKey("ТАЙМЕР ЗАПУЩЕНО") : LocalizedStringKey("ЗУПИНЕНО"))
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.5))
                 }

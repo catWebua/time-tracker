@@ -34,7 +34,7 @@ enum CSVExporter {
 
     /// Generates a CSV string from an array of time entries.
     static func generate(entries: [TimeEntry]) -> String {
-        let header = "Проект,Клієнт,Опис,Дата,Початок,Кінець,Тривалість (год),Оплачено,Теги\n"
+        let header = AppLocalization.string("Проект,Клієнт,Опис,Дата,Початок,Кінець,Тривалість (год),Оплачено,Теги") + "\n"
         let rows = entries.map { row(for: $0) }.joined(separator: "\n")
         return header + rows
     }
@@ -64,7 +64,7 @@ enum CSVExporter {
         let start    = Date.timeFormatter.string(from: entry.startedAt)
         let end      = entry.endedAt.map { Date.timeFormatter.string(from: $0) } ?? ""
         let hours    = String(format: "%.2f", entry.duration / 3600.0)
-        let billed   = entry.isBilled ? "Так" : "Ні"
+        let billed   = entry.isBilled ? AppLocalization.string("Так") : AppLocalization.string("Ні")
         let tags     = escaped(entry.tags.joined(separator: ", "))
 
         return "\(project),\(client),\(desc),\(date),\(start),\(end),\(hours),\(billed),\(tags)"

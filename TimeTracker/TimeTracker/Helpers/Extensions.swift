@@ -28,29 +28,23 @@ extension Date {
         Calendar.current.isDateInYesterday(self)
     }
 
-    // Performance: static cached formatters — DateFormatter is expensive to allocate.
-    // Creating one per cell-render caused O(n) allocations per scroll.
-    private static let relativeDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "d MMMM"
-        f.locale = Locale(identifier: "uk_UA")
-        return f
-    }()
-
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.timeStyle = .short
-        return f
-    }()
-
     func relativeLabel() -> String {
-        if isToday { return "Сьогодні" }
-        if isYesterday { return "Вчора" }
-        return Date.relativeDateFormatter.string(from: self)
+        if isToday { return AppLocalization.string("Сьогодні") }
+        if isYesterday { return AppLocalization.string("Вчора") }
+
+        return formatted(
+            .dateTime
+                .day()
+                .month(.wide)
+                .locale(AppLanguage.current.locale)
+        )
     }
 
     func timeString() -> String {
-        Date.timeFormatter.string(from: self)
+        formatted(
+            Date.FormatStyle(date: .omitted, time: .shortened)
+                .locale(AppLanguage.current.locale)
+        )
     }
 }
 

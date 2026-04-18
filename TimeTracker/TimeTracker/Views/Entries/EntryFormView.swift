@@ -43,7 +43,7 @@ struct EntryFormView: View {
                         VStack(spacing: 24) {
                             // Project Selector
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("ПРОЕКТ")
+                                Text(LocalizedStringKey("ПРОЕКТ"))
                                     .font(.system(size: 11, weight: .black, design: .rounded))
                                     .tracking(1.5)
                                     .foregroundStyle(.white.opacity(0.3))
@@ -100,12 +100,12 @@ struct EntryFormView: View {
                             // Time Selection
                             GlassInputGroup(title: "ЧАС") {
                                 VStack(spacing: 20) {
-                                    DatePicker("Початок", selection: $startDate)
+                                    DatePicker(LocalizedStringKey("Початок"), selection: $startDate)
                                         .tint(.purple)
                                     
                                     Divider().background(Color.white.opacity(0.1))
                                     
-                                    DatePicker("Кінець", selection: $endDate)
+                                    DatePicker(LocalizedStringKey("Кінець"), selection: $endDate)
                                         .tint(.purple)
                                 }
                             }

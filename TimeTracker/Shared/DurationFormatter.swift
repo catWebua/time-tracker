@@ -11,7 +11,7 @@ enum DurationFormatter {
         let s = total % 60
         
         if d > 0 {
-            return String(format: "%dд %02d:%02d:%02d", d, h, m, s)
+            return String(format: AppLocalization.string("%dд %02d:%02d:%02d"), d, h, m, s)
         }
         return String(format: "%02d:%02d:%02d", h, m, s)
     }
@@ -25,13 +25,13 @@ enum DurationFormatter {
         let s = total % 60
 
         if d > 0 {
-            return h > 0 ? "\(d)д \(h)г" : "\(d)д"
+            return h > 0 ? AppLocalization.string("\(d)д \(h)г") : AppLocalization.string("\(d)д")
         } else if h > 0 {
-            return m > 0 ? "\(h)г \(m)хв" : "\(h)г"
+            return m > 0 ? AppLocalization.string("\(h)г \(m)хв") : AppLocalization.string("\(h)г")
         } else if m > 0 {
-            return "\(m)хв"
+            return AppLocalization.string("\(m)хв")
         } else {
-            return "\(s)с"
+            return AppLocalization.string("\(s)с")
         }
     }
 

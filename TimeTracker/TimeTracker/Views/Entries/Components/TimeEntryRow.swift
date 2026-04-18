@@ -37,7 +37,7 @@ struct TimeEntryRow: View {
                         }
                         
                         if showProjectName {
-                            Text(entry.project?.name ?? "Без проекту")
+                            Text(entry.project?.name ?? AppLocalization.string("Без проекту"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(entry.project?.accentColor.opacity(0.8) ?? .secondary)
                         }

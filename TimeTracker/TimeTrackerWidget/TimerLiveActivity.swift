@@ -91,7 +91,7 @@ struct TimerLiveActivity: Widget {
                     .tracking(1)
                     .foregroundStyle(.white)
                     
-                Text(context.attributes.taskDescription.isEmpty ? "ВІДСЛІДКОВУВАННЯ" : context.attributes.taskDescription.uppercased())
+                Text(context.attributes.taskDescription.isEmpty ? LocalizedStringKey("ВІДСЛІДКОВУВАННЯ") : LocalizedStringKey(context.attributes.taskDescription.uppercased()))
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.white.opacity(0.5))
                     .lineLimit(1)

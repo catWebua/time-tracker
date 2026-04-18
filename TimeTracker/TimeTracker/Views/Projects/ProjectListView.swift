@@ -46,6 +46,8 @@ struct ProjectListView: View {
                         }
                     }
                 }
+                .safeAreaPadding(.top)
+                .safeAreaPadding(.bottom, 100) // Ensure the bottom list items aren't obscured by the TabBar
             }
             .toolbar(.hidden)
         }
@@ -104,7 +106,7 @@ struct ProjectListView: View {
                         }
                     }
                 } label: {
-                    Text("Архів (\(archivedProjects.count))")
+                    Text(LocalizedStringKey("Архів (\(archivedProjects.count))"))
                         .font(.subheadline.bold())
                         .foregroundStyle(.white.opacity(0.3))
                 }

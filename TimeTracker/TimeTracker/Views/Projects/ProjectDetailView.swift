@@ -59,7 +59,7 @@ struct ProjectDetailView: View {
                             GlassDashboardTile(
                                 title: "ВСЬОГО",
                                 value: DurationFormatter.short(project.totalDuration),
-                                unit: "год",
+                                unit: AppLocalization.string("год"),
                                 icon: "clock.fill",
                                 color: project.accentColor
                             )
@@ -67,7 +67,7 @@ struct ProjectDetailView: View {
                             GlassDashboardTile(
                                 title: "СЕСІЙ",
                                 value: "\(project.completedEntries.count)",
-                                unit: "шт",
+                                unit: AppLocalization.string("шт"),
                                 icon: "list.bullet",
                                 color: .white
                             )
@@ -109,7 +109,7 @@ struct ProjectDetailView: View {
                             
                             let unbilled = project.unbilledEntries.count
                             if unbilled > 0 {
-                                Text("\(unbilled) НЕ ОПЛАЧЕНО")
+                                Text("\(unbilled) " + AppLocalization.string("НЕ ОПЛАЧЕНО"))
                                     .font(.system(size: 9, weight: .black, design: .rounded))
                                     .foregroundStyle(.orange)
                                     .padding(.horizontal, 8)
@@ -144,7 +144,7 @@ struct ProjectDetailView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "checkmark.seal.fill")
                                     .font(.system(size: 20))
-                                Text("Завершити проект")
+                                Text(LocalizedStringKey("Завершити проект"))
                                     .font(.system(size: 18, weight: .bold, design: .rounded))
                             }
                             .foregroundStyle(.white)
@@ -169,7 +169,7 @@ struct ProjectDetailView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "archivebox.fill")
                                     .font(.system(size: 20))
-                                Text("Відновити з архіву")
+                                Text(LocalizedStringKey("Відновити з архіву"))
                                     .font(.system(size: 18, weight: .bold, design: .rounded))
                             }
                             .foregroundStyle(.white)
@@ -246,11 +246,11 @@ struct ProjectBudgetCard: View {
         
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("Бюджет", systemImage: isOver ? "exclamationmark.triangle.fill" : "chart.pie.fill")
+                Label(LocalizedStringKey("Бюджет"), systemImage: isOver ? "exclamationmark.triangle.fill" : "chart.pie.fill")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(barColor)
                 Spacer()
-                Text("\(DurationFormatter.short(project.totalDuration)) / \(Int(project.estimatedHours))г")
+                Text("\(DurationFormatter.short(project.totalDuration)) / \(Int(project.estimatedHours))" + AppLocalization.string("год"))
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -267,7 +267,7 @@ struct ProjectBudgetCard: View {
             }
             .frame(height: 8)
             
-            Text(isOver ? "Ліміт вичерпано" : "\(Int(project.estimatedHours - (project.totalDuration/3600)))г залишилось")
+            Text(isOver ? LocalizedStringKey("Ліміт вичерпано") : LocalizedStringKey("\(Int(project.estimatedHours - (project.totalDuration/3600)))г залишилось"))
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.3))
         }
@@ -301,10 +301,10 @@ struct ProjectDailyGoalCard: View {
             .frame(width: 48, height: 48)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(isDone ? "Ціль досягнута! 🎉" : "Денна ціль")
+                Text(isDone ? LocalizedStringKey("Ціль досягнута! 🎉") : LocalizedStringKey("Денна ціль"))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("\(DurationFormatter.short(todayDuration)) з \(Int(project.dailyGoalHours))г сьогодні")
+                Text("\(DurationFormatter.short(todayDuration)) " + AppLocalization.string("з") + " \(Int(project.dailyGoalHours))" + AppLocalization.string("год сьогодні"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
             }

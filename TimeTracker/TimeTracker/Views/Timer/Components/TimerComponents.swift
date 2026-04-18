@@ -271,7 +271,7 @@ struct UnifiedContextView: View {
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.8))
                 } else {
-                    TextField("Чим займаєшся?", text: $taskDescription)
+                    TextField(LocalizedStringKey("Чим займаєшся?"), text: $taskDescription)
                         .textFieldStyle(.plain)
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundStyle(.white)
@@ -295,7 +295,7 @@ struct GoalProgressView: View {
     var body: some View {
         let isDone = progress >= 1.0
         let barColor: Color = isDone ? .green : project.accentColor
-        let goalDisplay = "\(Int(project.dailyGoalHours))г"
+        let goalDisplay = AppLocalization.string("\(Int(project.dailyGoalHours))г")
 
         VStack(spacing: 8) {
             HStack {

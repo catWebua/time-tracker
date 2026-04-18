@@ -45,13 +45,13 @@ struct TimerView: View {
         return max(goal - total, 0)
     }
 
+    @State private var feedbackTrigger = false
+
     var body: some View {
         @Bindable var vm = timerVM
         
         NavigationStack {
             ZStack {
-                // Background is now global in ContentView
-                
                 // Content
                 VStack(spacing: 0) {
                     customHeader
@@ -67,34 +67,18 @@ struct TimerView: View {
                     )
                     .padding(.bottom, 40)
                     
-                    // Stats Section (Directly from Mockup)
+                    // Stats Section
                     VStack(spacing: 8) {
                         if let project = timerVM.selectedProject {
                             let currentTotal = todayDurationForProject + (timerVM.isRunning ? Date().timeIntervalSince(timerVM.activeEntry?.startedAt ?? Date()) : 0)
                             HStack(spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("СЬОГОДНІ")
-                                            .font(.system(size: 8, weight: .black))
-                                            .tracking(1)
-                                            .foregroundStyle(.white.opacity(0.3))
-                                        Text(DurationFormatter.formatted(currentTotal))
-                                            .foregroundStyle(Color(hex: "BF5AF2"))
-                                            .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                    }
-                                    
-                                    Text("/")
-                                        .foregroundStyle(.white.opacity(0.1))
-                                        .padding(.top, 10)
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("ЦІЛЬ")
-                                            .font(.system(size: 8, weight: .black))
-                                            .tracking(1)
-                                            .foregroundStyle(.white.opacity(0.3))
-                                        Text(DurationFormatter.formatted(project.dailyGoalHours * 3600))
-                                            .foregroundStyle(.white.opacity(0.4))
-                                            .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                    }
+                                statsColumn(title: "СЬОГОДНІ", value: DurationFormatter.formatted(currentTotal), color: Color(hex: "BF5AF2"))
+                                
+                                Text("/")
+                                    .foregroundStyle(.white.opacity(0.1))
+                                    .padding(.top, 10)
+                                
+                                statsColumn(title: "ЦІЛЬ", value: DurationFormatter.formatted(project.dailyGoalHours * 3600), color: .white.opacity(0.4))
                             }
                             
                             Button {
@@ -112,7 +96,7 @@ struct TimerView: View {
                             .buttonStyle(.plain)
                             
                             if let remaining = timeRemaining {
-                                Text("\(DurationFormatter.formatted(remaining)) remaining")
+                                Text("залишилось \(DurationFormatter.formatted(remaining))")
                                     .font(.system(size: 14, weight: .medium, design: .rounded))
                                     .foregroundStyle(.white.opacity(0.5))
                             }
@@ -125,26 +109,7 @@ struct TimerView: View {
                             }
 
                         } else {
-                            Button {
-                                showProjectPicker = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 18, weight: .bold))
-                                    Text("Оберіть проект")
-                                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                                }
-                                .foregroundStyle(Color(hex: "BF5AF2"))
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 24)
-                                .background {
-                                    Capsule()
-                                        .fill(Color(hex: "BF5AF2").opacity(0.1))
-                                        .overlay(Capsule().stroke(Color(hex: "BF5AF2").opacity(0.3), lineWidth: 1))
-                                }
-                                .shadow(color: Color(hex: "BF5AF2").opacity(0.4), radius: 10)
-                            }
-                            .buttonStyle(.plain)
+                            projectPickerButton
                         }
                     }
                     .padding(.bottom, 40)
@@ -161,11 +126,12 @@ struct TimerView: View {
                             }
                         },
                         onSettings: {
-                            // Placeholder for settings
+                            showSettings = true
                         }
                     )
                     .padding(.bottom, 100)
                 }
+                .safeAreaPadding(.top)
             }
             .toolbar(.hidden)
             .sheet(isPresented: $showProjectPicker) {
@@ -180,7 +146,43 @@ struct TimerView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .sensoryFeedback(.warning, trigger: feedbackTrigger)
         }
+    }
+
+    private func statsColumn(title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(LocalizedStringKey(title))
+                .font(.system(size: 8, weight: .black))
+                .tracking(1)
+                .foregroundStyle(.white.opacity(0.3))
+            Text(value)
+                .foregroundStyle(color)
+                .font(.system(size: 16, weight: .bold, design: .monospaced))
+        }
+    }
+
+    private var projectPickerButton: some View {
+        Button {
+            showProjectPicker = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 18, weight: .bold))
+                Text("Оберіть проект")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(Color(hex: "BF5AF2"))
+            .padding(.vertical, 12)
+            .padding(.horizontal, 24)
+            .background {
+                Capsule()
+                    .fill(Color(hex: "BF5AF2").opacity(0.1))
+                    .overlay(Capsule().stroke(Color(hex: "BF5AF2").opacity(0.3), lineWidth: 1))
+            }
+            .shadow(color: Color(hex: "BF5AF2").opacity(0.4), radius: 10)
+        }
+        .buttonStyle(.plain)
     }
 
     private var customHeader: some View {
@@ -188,12 +190,12 @@ struct TimerView: View {
             Spacer()
             
             VStack(spacing: 4) {
-                Text("WORK SESSION")
+                Text("РОБОЧА СЕСІЯ")
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .tracking(2)
                     .foregroundStyle(.white.opacity(0.3))
                 
-                Text(timerVM.selectedProject?.name ?? "Ring of Progress")
+                Text(timerVM.selectedProject?.name ?? AppLocalization.string("Кільце Прогресу"))
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
@@ -214,7 +216,6 @@ struct TimerView: View {
         .padding(.top, 20)
     }
 
-
     private func handleStartStop() {
         if timerVM.isRunning {
             timerVM.stop(context: context)
@@ -222,13 +223,11 @@ struct TimerView: View {
             if timerVM.selectedProject != nil {
                 timerVM.start(context: context)
             } else {
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.warning)
+                feedbackTrigger.toggle()
                 showNoProjectAlert = true
             }
         }
     }
-
 
     private var selectedProjectBinding: Binding<Project?> {
         Binding(

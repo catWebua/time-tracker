@@ -21,9 +21,9 @@ struct ReportsView: View {
     @State private var period: Period = .week
 
     enum Period: String, CaseIterable {
-        case week  = "Тиждень"
-        case month = "Місяць"
-        case all   = "Весь"
+        case week  = "week"
+        case month = "month"
+        case all   = "all"
     }
 
     private var filteredEntries: [TimeEntry] {
@@ -84,8 +84,8 @@ struct ReportsView: View {
                             Spacer()
                             
                             ShareLink(
-                                item: CSVExporter.createReport(entries: filteredEntries, periodName: period.rawValue),
-                                preview: SharePreview("Звіт (\(period.rawValue))", image: Image(systemName: "chart.bar.doc.horizontal"))
+                                item: CSVExporter.createReport(entries: filteredEntries, periodName: AppLocalization.string(forKey: period.rawValue)),
+                                preview: SharePreview(AppLocalization.string("Звіт"), image: Image(systemName: "chart.bar.doc.horizontal"))
                             ) {
                                 Image(systemName: "square.and.arrow.up")
                                     .font(.title3)
@@ -98,7 +98,7 @@ struct ReportsView: View {
                         // Custom Segmented Picker
                         Picker("Період", selection: $period) {
                             ForEach(Period.allCases, id: \.self) { p in
-                                Text(p.rawValue).tag(p)
+                                Text(LocalizedStringKey(p.rawValue)).tag(p)
                             }
                         }
                         .pickerStyle(.segmented)
@@ -110,8 +110,9 @@ struct ReportsView: View {
                             dashboardContent
                         }
                     }
-                    .padding(.bottom, 120) // Bottom tab bar margin
                 }
+                .safeAreaPadding(.top)
+                .safeAreaPadding(.bottom, 120) // Bottom tab bar margin
             }
             .toolbar(.hidden)
         }
@@ -137,7 +138,7 @@ struct ReportsView: View {
                 GlassDashboardTile(
                     title: "ГОДИНИ",
                     value: String(format: "%.1f", totalDuration / 3600),
-                    unit: "год",
+                    unit: AppLocalization.string("год"),
                     icon: "clock.fill",
                     color: .purple
                 )
@@ -145,7 +146,7 @@ struct ReportsView: View {
                 GlassDashboardTile(
                     title: "ДОХІД",
                     value: String(format: "%.0f", totalEarned),
-                    unit: projects.first?.currencySymbol ?? "₴",
+                    unit: projects.first?.currencySymbol ?? AppLocalization.string("₴"),
                     icon: "banknote.fill",
                     color: .green
                 )
@@ -154,7 +155,7 @@ struct ReportsView: View {
 
             // Chart Section
             VStack(alignment: .leading, spacing: 16) {
-                Text("ДИНАМІКА РОБОТИ")
+                Text(LocalizedStringKey("ДИНАМІКА РОБОТИ"))
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(.white.opacity(0.4))
@@ -169,7 +170,7 @@ struct ReportsView: View {
 
             // Project Breakdown
             VStack(alignment: .leading, spacing: 16) {
-                Text("РОЗПОДІЛ ПО ПРОЕКТАХ")
+                Text(LocalizedStringKey("РОЗПОДІЛ ПО ПРОЕКТАХ"))
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(.white.opacity(0.4))
@@ -195,8 +196,8 @@ struct BarChartView: View {
     var body: some View {
         Chart(data) { item in
             BarMark(
-                x: .value("День", item.date, unit: .day),
-                y: .value("Годин", item.hours)
+                x: .value(AppLocalization.string("День"), item.date, unit: .day),
+                y: .value(AppLocalization.string("Годин"), item.hours)
             )
             .foregroundStyle(
                 LinearGradient(
@@ -218,7 +219,7 @@ struct BarChartView: View {
             AxisMarks { value in
                 AxisValueLabel {
                     if let h = value.as(Double.self) {
-                        Text("\(Int(h))г")
+                        Text(AppLocalization.string("\(Int(h))г"))
                             .foregroundStyle(Color.white.opacity(0.2))
                     }
                 }
